@@ -4,6 +4,7 @@
     
     export let items;
     export let desc;
+    export let defaultValue = "";
 
     function handleEvent(event) {
         dispatch("change", {
@@ -13,7 +14,7 @@
 </script>
 
 {desc}
-<select on:change={handleEvent}>
+<select on:change={handleEvent} value={defaultValue}>
     <option value="">Klikni pro výběr</option>
     {#each items as item}
         <option value={item}>{item}</option>
