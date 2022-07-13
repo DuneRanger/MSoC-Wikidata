@@ -1,20 +1,61 @@
 <script lang="ts">
-	let baseLink = 'https://query.wikidata.org/embed.html#';
-	let code = `#Largest cities of the world
-#defaultView:BubbleChart
-SELECT DISTINCT ?cityLabel ?population ?gps
-WHERE
-{
-  ?city wdt:P31/wdt:P279* wd:Q515 .
-  ?city wdt:P1082 ?population .
-  ?city wdt:P625 ?gps .
-  SERVICE wikibase:label {
-    bd:serviceParam wikibase:language "en" .
-  }
-}
-ORDER BY DESC(?population) LIMIT 100`
-let encodedLink = baseLink + encodeURIComponent(code)
+    import InitialButtonManager from "./components/InitialButtonManager.svelte";
+    const iframeURL:string = 'https://query.wikidata.org/embed.html#';
+    let mainQuery:string = `SELECT ?prop ?propname
+        WHERE
+        {
+        wd:Q5 wdt:P1963 ?prop .
+        
+        SERVICE wikibase:label { 
+        bd:serviceParam wikibase:language "cs" .
+        ?prop rdfs:label ?propname .
+        }
+        } ORDER BY(?propname)`;
+    $: encodedLink = iframeURL + encodeURIComponent(mainQuery);
+
+
+    let iframeVisibility:boolean = false;
+
+    function toggleIframe():void {
+        iframeVisibility = !iframeVisibility;
+    }
+
+
 </script>
 
-<iframe style="width: 100vw; height: 100vh; border: none;" title="shutup" src={encodedLink} referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups">
-</iframe>
+<style>
+    body {
+        background-color: grey;
+    }
+    
+    #displayButton {
+        position: absolute;
+        background-color: #81e62e;
+        border-color: #105321;
+        border-radius: 5px;
+        border-width: 2px;
+        transform: scale(1.3);
+        margin: 1em;
+        right:    1%;
+        bottom:   1%;
+    }
+
+    #wikidataIframe {
+        position: absolute;
+        left: 50%;
+        top: 30%;
+        transform: translate(-50%, -30%);
+    }
+</style>
+
+<body>
+    {#if iframeVisibility}
+        <button id="backButton" on:click={toggleIframe}>🔙</button>
+        <iframe id="wikidataIframe" style="width: 90vw; height: 90vh; border: none;" title="wikidata" src={encodedLink} referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups">
+        </iframe>
+    {:else}
+        <InitialButtonManager></InitialButtonManager>
+        <button id="displayButton" on:click={toggleIframe}><img src="./display.png" width="20px" height="15px" style="padding-right:5px" alt="">Zobrazit</button>
+    {/if}
+</body>
+  

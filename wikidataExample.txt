@@ -1,0 +1,5 @@
+SELECT ?person ?birthDate
+WHERE {
+  VALUES ?person {wd:Q2980777 wd:Q457687 wd:Q5400967}
+  ?person wdt:P569 ?birthDate .
+}

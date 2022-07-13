@@ -1,0 +1,22 @@
+SELECT DISTINCT
+?propertyAsEntity
+?propertyAsEntityLabel
+?propertyAsProperty
+?exampleItemWithProperty
+?exampleValueOfPropertyLabel
+WHERE {
+    wd:Q5 wdt:P1963 ?propertyAsEntity . #Gets all common properties for the item
+    ?propertyAsEntity wdt:P1855 ?exampleItemWithProperty . #Gets examples of items that have this property (this unfortunately gets all examples listed and I can't figure out how to limit it)
+    BIND(iri(replace(str(?propertyAsEntity), "entity", "prop/direct")) as ?propertyAsProperty) #This line changes each property uri from an entity to a prop/direct (usable as a wdt:P___)
+    ?exampleItemWithProperty ?propertyAsProperty ?exampleValueOfProperty . #Gets the value of the property for the example
+        
+    SERVICE wikibase:label { 
+        bd:serviceParam wikibase:language "cs" .
+        ?propertyAsEntity rdfs:label ?propertyAsEntityLabel .
+        ?exampleValueOfProperty rdfs:label ?exampleValueOfPropertyLabel .
+    }
+  #Filtering labels also tends to filter numbers and dates, so no filters are set and the choosing of value is done in main.js
+} ORDER BY(?propertyAsEntityLabel) #Orders alphabetically
+
+
+#   https://query.wikidata.org/#SELECT%20DISTINCT%0A%3FpropertyAsEntity%0A%3FpropertyAsEntityLabel%0A%3FpropertyAsProperty%0A%3FexampleItemWithProperty%0A%3FexampleValueOfPropertyLabel%0AWHERE%20%7B%0A%20%20%20%20wd%3AQ5%20wdt%3AP1963%20%3FpropertyAsEntity%20.%20%23Gets%20all%20common%20properties%20for%20the%20item%0A%20%20%20%20%3FpropertyAsEntity%20wdt%3AP1855%20%3FexampleItemWithProperty%20.%20%23Gets%20examples%20of%20items%20that%20have%20this%20property%20%28this%20unfortunately%20gets%20all%20examples%20listed%20and%20I%20can%27t%20figure%20out%20how%20to%20limit%20it%29%0A%20%20%20%20BIND%28iri%28replace%28str%28%3FpropertyAsEntity%29%2C%20%22entity%22%2C%20%22prop%2Fdirect%22%29%29%20as%20%3FpropertyAsProperty%29%20%23This%20line%20changes%20each%20property%20uri%20from%20an%20entity%20to%20a%20prop%2Fdirect%20%28usable%20as%20a%20wdt%3AP___%29%0A%20%20%20%20%3FexampleItemWithProperty%20%3FpropertyAsProperty%20%3FexampleValueOfProperty%20.%20%23Gets%20the%20value%20of%20the%20property%20for%20the%20example%0A%20%20%20%20%20%20%20%20%0A%20%20%20%20SERVICE%20wikibase%3Alabel%20%7B%20%0A%20%20%20%20%20%20%20%20bd%3AserviceParam%20wikibase%3Alanguage%20%22cs%22%20.%0A%20%20%20%20%20%20%20%20%3FpropertyAsEntity%20rdfs%3Alabel%20%3FpropertyAsEntityLabel%20.%0A%20%20%20%20%20%20%20%20%3FexampleValueOfProperty%20rdfs%3Alabel%20%3FexampleValueOfPropertyLabel%20.%0A%20%20%20%20%7D%0A%20%20%23Filtering%20labels%20also%20tends%20to%20filter%20numbers%20and%20dates%2C%20so%20no%20filters%20are%20set%20and%20the%20choosing%20of%20value%20is%20done%20in%20main.js%0A%7D%20ORDER%20BY%28%3FpropertyAsEntityLabel%29%20%23Orders%20alphabetically
