@@ -1,25 +1,25 @@
-type wikidataEntityArray = {
+type wikidataEntityObject = {
     [key:string]: {
         "id":string,
-        "properties"?:wikidataEntityArray
+        "properties"?:wikidataEntityObject
         "valueType"?:string
+        "examples"?:wikidataEntityObject
     }
 };
 
 class GlobalVariables{
-    queryPropertyVariables:{[key:string]:wikidataEntityArray};
-
+    queryPropertyVariables:{[key:string]:wikidataEntityObject};
     constructor(){}
     static get queryItemVariables():Array<string>{
         return Object.keys(GlobalVariables.queryPropertyVariables)
     }
 
-    static queryPropertyVariables:wikidataEntityArray = {
+    static queryPropertyVariables:wikidataEntityObject = {
         "Člověk": {
             "id":"Q5",
             "properties": {
-                "Bydliště":{"id":"P551", "valueType":"string"},
-                "Choť":{"id":"P26", "valueType":"string"},
+                "Bydliště":{"id":"P551", "valueType":"string", "examples":{"Česko":{"id":"Q213"}, "Praha":{"id":"Q1085"}}, get properties() {return GlobalVariables.queryPropertyVariables.Budova.properties}},
+                "Choť":{"id":"P26", "valueType":"string", "examples":{"Já":{"id":"nic"}}},
                 "Datum křtu":{"id":"P1636", "valueType":"date"},
                 "Datum narození":{"id":"P569", "valueType":"date"},
                 "Datum pohřbu nebo kremace":{"id":"P4602", "valueType":"date"},

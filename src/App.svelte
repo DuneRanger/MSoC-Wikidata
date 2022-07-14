@@ -19,7 +19,19 @@
     function toggleIframe():void {
         iframeVisibility = !iframeVisibility;
     }
+    
+    let triples = [0];
 
+    function handleStateChange(event) {
+        let id = event.detail.id;
+        let state = event.detail.state;
+        if (state == "filled") {
+            triples[id] = 1;
+            if (triples.reduce((a, b) => a + b) == triples.length) triples.push(0);
+        } else if (state == "empty") {
+            triples[id] = 0;
+        }
+    }
 
 </script>
 
@@ -46,6 +58,7 @@
         top: 30%;
         transform: translate(-50%, -30%);
     }
+
 </style>
 
 <body>
@@ -54,7 +67,9 @@
         <iframe id="wikidataIframe" style="width: 90vw; height: 90vh; border: none;" title="wikidata" src={encodedLink} referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups">
         </iframe>
     {:else}
-        <InitialButtonManager></InitialButtonManager>
+        {#each triples as triple, i}
+            <InitialButtonManager id={i} highestID={triples.length-1} on:stateChange={handleStateChange}></InitialButtonManager>
+        {/each}
         <button id="displayButton" on:click={toggleIframe}><img src="./display.png" width="20px" height="15px" style="padding-right:5px" alt="">Zobrazit</button>
     {/if}
 </body>

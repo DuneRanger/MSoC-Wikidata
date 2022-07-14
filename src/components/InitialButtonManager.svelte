@@ -5,6 +5,19 @@
     import StringInput from "./StringInput.svelte";
     import GlobalVariables from "./GlobalVariables";
 
+    export let id;
+    export let highestID;
+    export let initialItems = GlobalVariables.queryItemVariables;
+
+    import {createEventDispatcher} from "svelte";
+    const dispatch = createEventDispatcher();
+
+    function tripleStateChange(state) {
+        dispatch("stateChange", {
+            id: id,
+            state: state
+        })
+    }
     
     let selectedItem = "";
     function receiveItemChange(event) {
@@ -23,19 +36,23 @@
         selectedTimePeriod = event.detail.newValue;
     }
     
-    $: TypeOfPropertyValue = selectedProperty ? GlobalVariables.queryPropertyVariables[selectedItem].properties[selectedProperty].valueType : undefined;
+    $: itemsProperties = selectedItem ? GlobalVariables.queryPropertyVariables[selectedItem].properties : undefined
+    $: TypeOfPropertyValue = selectedProperty ? itemsProperties[selectedProperty].valueType : undefined;
+
+    $: if (selectedProperty) {tripleStateChange("filled")} else {tripleStateChange("empty")};
+    
 </script>
 
-<div style="padding: 8px">
-    <InitialButton items={GlobalVariables.queryItemVariables} on:change={receiveItemChange} desc="Hledám: "></InitialButton>
-    {#if !selectedItem || !selectedItem}
+<div style="padding: 8px; z-index:1">
+    <InitialButton items={initialItems} on:change={receiveItemChange} desc="Hledám: "></InitialButton>
+    {#if !selectedItem}
         <InitialButton items={[]} desc="Který ..."></InitialButton>
     {:else}    
-        <InitialButton items={Object.keys(GlobalVariables.queryPropertyVariables[selectedItem].properties)} on:change={receivePropertyChange} defaultValue={Object.keys(GlobalVariables.queryPropertyVariables[selectedItem].properties)[0]} desc="Který má/je/se: "></InitialButton>
-        {#if !selectedProperty}
+        <InitialButton items={Object.keys(itemsProperties)} on:change={receivePropertyChange} defaultValue={Object.keys(itemsProperties)[0]} desc="Který má/je/se: "></InitialButton>
+        {#if !itemsProperties[selectedProperty]}
             <input disabled>
         {:else if TypeOfPropertyValue == "string"}
-            <StringInput></StringInput>
+            <StringInput examples={itemsProperties[selectedProperty].examples} id={id} highestID={highestID}></StringInput>
         {:else if TypeOfPropertyValue == "date"}
             <DateInput on:change={receiveTimePeriodChange}></DateInput>
         {:else if TypeOfPropertyValue == "number"}

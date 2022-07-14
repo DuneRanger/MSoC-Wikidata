@@ -1,14 +1,23 @@
 <script lang="ts">
+    export let examples;
+    export let id;
+    export let highestID;
+    $: console.log(id, highestID)
+    $: if (examples) {
+        examples = Object.keys(examples)
+    }
     setTimeout(() => {
-        let inputBox:any = document.getElementById("stringInput");
-        let exampleValues:any = document.getElementById("exampleDatalist");
-        let formattingBreak:any = document.getElementById("secretLineBreak")
+        let inputBox:any = document.getElementById("stringInput"+id);
+        let exampleValues:any = document.getElementById("examplesDatalist"+id);
+        let formattingBreak:any = document.getElementById("secretLineBreak"+id)
+        let container:any = document.getElementById("stringInputContainer"+id)
         let currentFocus = -1;
-        var boxWidth = 350;
+        // var boxWidth = 350;
 
         for (let option of exampleValues.options) {
             option.onclick = function () {
                 inputBox.value = option.value;
+                container.style.zIndex = 0;
                 formattingBreak.style.display = 'block';
                 exampleValues.style.display = 'none';
                 inputBox.style.borderRadius = "3px";
@@ -16,6 +25,7 @@
         };
 
         inputBox.onfocus = function () {
+            container.style.zIndex = 100-id;
             formattingBreak.style.display = 'none';
             exampleValues.style.display = 'block';
             inputBox.style.borderRadius = "3px 3px 0 0";  
@@ -26,9 +36,11 @@
             let text = inputBox.value.toUpperCase();
             for (let option of exampleValues.options) {
                 if(option.value.toUpperCase().indexOf(text) > -1){
+                    container.style.zIndex = 100-id;
                     formattingBreak.style.display = 'none';
                     option.style.display = "block";
                 }else{
+                    container.style.zIndex = 0;
                     formattingBreak.style.display = 'block';
                     option.style.display = "none";
                 }
@@ -66,7 +78,7 @@
                 x[i].classList.remove("active");
             }
         }
-    })
+    });
 </script>
 
 <style>
@@ -84,7 +96,7 @@
         width: 350px;
         padding: 5px;
         max-height: 11rem;
-        overflow-y: auto
+        overflow-y: auto;
     }
 
     option {
@@ -108,6 +120,7 @@
 
     p {
         display: inline;
+        background-color: rgba(128, 128, 128, 1)
     }
 </style>
 
@@ -115,25 +128,26 @@
 <div style="display:none" class="active"></div> 
 <!-- This has to exist, so that svelte compiles the css for .active -->
 
-<div>
-    <input list="" id="stringInput" role="combobox" placeholder="Tady můžete psát">
+<div id={"stringInputContainer"+id}>
+    <input list="" id={"stringInput"+id} role="combobox" placeholder="Prázdné pole = Jakákoliv hodnota">
     <!-- Its important that you keep list attribute empty to hide the default dropdown icon and the browser's default datalist -->
 
     
-    <datalist id="exampleDatalist">
-        <option value="Internet Explorer">Internet Explorer</option>
+    <datalist id={"examplesDatalist"+id}>
         <option value="Chrome">Chrome</option>
-        <option value="Safari">Safari</option>
-        <option value="Microsoft Edge">Microsoft Edge</option>
         <option value="Firefox">Firefox</option>
-        <option value="Microsoft Edge">Microsoft Edge</option>
-        <option value="Firefox">Firefox</option>
-        <option value="Microsoft Edge">Microsoft Edge</option>
+        {#if examples}
+            {#each examples as example}
+                <option value={example}>{example}</option>
+            {/each}
+        {/if}
     </datalist>
     
-    <p>
-        <br id="secretLineBreak">
-        (Pozor, je možné, že uložené data nebudou pod stejným názvem, který zadáte)
-    </p>
+    {#if id>=highestID}
+        <p>
+            <br id={"secretLineBreak"+id}>
+            (Pozor, je možné, že uložené data nebudou pod stejným názvem, který zadáte)
+        </p>
+    {/if}
 
 </div>
