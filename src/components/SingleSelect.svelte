@@ -1,12 +1,12 @@
 <script lang="ts">
     import {createEventDispatcher} from "svelte";
-    const dispatch = createEventDispatcher();
+    const dispatch:any = createEventDispatcher();
     
-    export let items;
-    export let desc;
-    export let defaultValue = "";
+    export let items:Array<string>;
+    export let desc:string = "";
+    export let defaultValue:string = "";
 
-    function handleEvent(event) {
+    function handleEvent(event):void {
         dispatch("change", {
             newValue: event.srcElement.value
         })

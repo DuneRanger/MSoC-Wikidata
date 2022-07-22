@@ -1,5 +1,5 @@
 <script lang="ts">
-    import InitialButtonManager from "./components/InitialButtonManager.svelte";
+    import InitialButtonManager from "./components/MainManager.svelte";
     const iframeURL:string = 'https://query.wikidata.org/embed.html#';
     let mainQuery:string = `SELECT ?prop ?propname
         WHERE
@@ -11,6 +11,7 @@
         ?prop rdfs:label ?propname .
         }
         } ORDER BY(?propname)`;
+    let encodedLink:string;
     $: encodedLink = iframeURL + encodeURIComponent(mainQuery);
 
 
@@ -20,16 +21,21 @@
         iframeVisibility = !iframeVisibility;
     }
     
-    let triples = [0];
+    let triples:Array<number> = [0];
 
-    function handleStateChange(event) {
-        let id = event.detail.id;
-        let state = event.detail.state;
+    function handleStateChange(event):void {
+        let id:number = event.detail.id;
+        let state:string = event.detail.state;
         if (state == "filled") {
             triples[id] = 1;
-            if (triples.reduce((a, b) => a + b) == triples.length) triples.push(0);
+            if (triples.reduce((a, b) => a + b) == triples.length && triples.length < 10) triples.push(0);
         } else if (state == "empty") {
             triples[id] = 0;
+            // let x = Math.max(triples.lastIndexOf(1),0);
+            // if (x < triples.length-1) triples.splice(x+1,);
+            // console.log(triples.reduce((a, b) => a + b), triples.length, triples)
+            // if (triples.reduce((a, b) => a + b) < triples.length-1) triples = triples.filter(x => x)
+            // console.log(triples.reduce((a, b) => a + b), triples.length, triples)
         }
     }
 
@@ -68,8 +74,11 @@
         </iframe>
     {:else}
         {#each triples as triple, i}
-            <InitialButtonManager id={i} highestID={triples.length-1} on:stateChange={handleStateChange}></InitialButtonManager>
+            <InitialButtonManager id={i} on:stateChange={handleStateChange}></InitialButtonManager>
         {/each}
+        {#if triples.length == 10}
+            <p style="color:darkred; font-size:24px">Dosáhli jste limitu! (Z důvodů přesnosti)</p>
+        {/if}
         <button id="displayButton" on:click={toggleIframe}><img src="./display.png" width="20px" height="15px" style="padding-right:5px" alt="">Zobrazit</button>
     {/if}
 </body>

@@ -1,53 +1,64 @@
 <script lang="ts">
-    export let examples;
-    export let id;
-    export let highestID;
-    $: console.log(id, highestID)
-    $: if (examples) {
-        examples = Object.keys(examples)
+    import {createEventDispatcher} from "svelte";
+    import InfoSign from "./InfoSign.svelte";
+    const dispatch:any = createEventDispatcher();
+    
+    function handleInputChange(event):void {
+        dispatch("InputChange", {
+            inputValue: event.srcElement.value
+        })
     }
+
+    export let examples:Array<string>;
+    export let id:number;
+
     setTimeout(() => {
-        let inputBox:any = document.getElementById("stringInput"+id);
-        let exampleValues:any = document.getElementById("examplesDatalist"+id);
-        let formattingBreak:any = document.getElementById("secretLineBreak"+id)
-        let container:any = document.getElementById("stringInputContainer"+id)
-        let currentFocus = -1;
-        // var boxWidth = 350;
+        //True types are commented, becuase of ridiculous type requirements (e.g. 56 more required properties)
+        let inputBox:any/*HTMLInputElement*/ = document.getElementById("stringInput"+id);
+        let exampleValues:any/*HTMLDataListElement*/ = document.getElementById("examplesDatalist"+id);
+        let container:any/*HTMLDivElement*/ = document.getElementById("stringInputContainer"+id);
+        let currentFocus:number = -1;
 
         for (let option of exampleValues.options) {
-            option.onclick = function () {
+            option.onclick = function ():void {
                 inputBox.value = option.value;
-                container.style.zIndex = 0;
-                formattingBreak.style.display = 'block';
+                inputBox.dispatchEvent(new Event("change"));
+                container.style.zIndex = "0";
                 exampleValues.style.display = 'none';
                 inputBox.style.borderRadius = "3px";
             }
         };
 
-        inputBox.onfocus = function () {
-            container.style.zIndex = 100-id;
-            formattingBreak.style.display = 'none';
+        inputBox.onfocus = function ():void {
+            container.style.zIndex = (100-id).toString();
             exampleValues.style.display = 'block';
             inputBox.style.borderRadius = "3px 3px 0 0";  
         };
 
-        inputBox.oninput = function() {
+        // onblur disrupts options.onclick, so this method of unfocusing was chosen instead
+        document.addEventListener("click", function(e):void {
+            if (!container.contains(e.target)) {
+                container.style.zIndex = "0";
+                exampleValues.style.display = "none";
+                inputBox.style.borderRadius = "3px";  
+            }
+        });
+
+        inputBox.oninput = function():void {
             currentFocus = -1;
-            let text = inputBox.value.toUpperCase();
+            let text:string = inputBox.value.toUpperCase();
             for (let option of exampleValues.options) {
                 if(option.value.toUpperCase().indexOf(text) > -1){
-                    container.style.zIndex = 100-id;
-                    formattingBreak.style.display = 'none';
+                    container.style.zIndex = (100-id).toString();
                     option.style.display = "block";
                 }else{
-                    container.style.zIndex = 0;
-                    formattingBreak.style.display = 'block';
+                    container.style.zIndex = "0";
                     option.style.display = "none";
                 }
             };
         }
 
-        inputBox.onkeydown = function(e) {
+        inputBox.onkeydown = function(e):void {
             if(e.keyCode == 40){
                 currentFocus++;
                 addActive(exampleValues.options);
@@ -65,15 +76,14 @@
             }
         }
     
-        function addActive(x) {
-            if (!x) return false;
-            console.log(x)
+        function addActive(x):void {
+            if (!x) return;
             removeActive(x);
             if (currentFocus >= x.length) currentFocus = 0;
             if (currentFocus < 0) currentFocus = (x.length - 1);
             x[currentFocus].classList.add("active");
         }
-        function removeActive(x) {
+        function removeActive(x):void {
             for (var i = 0; i < x.length; i++) {
                 x[i].classList.remove("active");
             }
@@ -83,6 +93,7 @@
 
 <style>
     input {
+        /* Changing this with requires changing datalist.width and the css in InfoSign.svelt */
         width: 362px;
         margin: 0;
         outline: 1px;
@@ -118,10 +129,6 @@
         margin: 0 0 0 5px;
     }
 
-    p {
-        display: inline;
-        background-color: rgba(128, 128, 128, 1)
-    }
 </style>
 
 
@@ -129,11 +136,13 @@
 <!-- This has to exist, so that svelte compiles the css for .active -->
 
 <div id={"stringInputContainer"+id}>
-    <input list="" id={"stringInput"+id} role="combobox" placeholder="Prázdné pole = Jakákoliv hodnota">
+    <input list="" id={"stringInput"+id} role="combobox" placeholder="Prázdné pole = Jakákoliv hodnota" on:change={handleInputChange}>
     <!-- Its important that you keep list attribute empty to hide the default dropdown icon and the browser's default datalist -->
 
     
     <datalist id={"examplesDatalist"+id}>
+        <option value="Chrome">Chrome</option>
+        <option value="Chrome">Chrome</option>
         <option value="Chrome">Chrome</option>
         <option value="Firefox">Firefox</option>
         {#if examples}
@@ -142,12 +151,6 @@
             {/each}
         {/if}
     </datalist>
-    
-    {#if id>=highestID}
-        <p>
-            <br id={"secretLineBreak"+id}>
-            (Pozor, je možné, že uložené data nebudou pod stejným názvem, který zadáte)
-        </p>
-    {/if}
 
+    <InfoSign text="Pozor! Je možné, že uložené data nebudou pod stejným názvem, který zadáte"></InfoSign>
 </div>

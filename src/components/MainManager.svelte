@@ -1,45 +1,59 @@
 <script lang="ts">
-    import InitialButton from "./InitialButton.svelte";
+    import InitialButton from "./SingleSelect.svelte";
     import NumberInput from "./NumberInput.svelte";
     import DateInput from "./DateInput.svelte";
     import StringInput from "./StringInput.svelte";
-    import GlobalVariables from "./GlobalVariables";
+    import GlobalVariables, {wikidataEntitiesObject, wikidataPropertiesObject} from "./GlobalVariables";
 
-    export let id;
-    export let highestID;
-    export let initialItems = GlobalVariables.queryItemVariables;
+    export let id:number;
+    export let initialItems:Array<string> = GlobalVariables.queryItemVariables;
 
     import {createEventDispatcher} from "svelte";
     const dispatch = createEventDispatcher();
 
-    function tripleStateChange(state) {
+    function tripleStateChange(state):void {
         dispatch("stateChange", {
             id: id,
-            state: state
+            state: state,
+            selectedItem: selectedItem,
+            selectedProperty: selectedProperty
         })
     }
     
-    let selectedItem = "";
-    function receiveItemChange(event) {
+    let selectedItem:string|undefined = "";
+    function receiveItemChange(event):void {
         selectedItem = event.detail.newValue;
         //The browser will change this according to the last ID selected, but this stops the !selectedProperty if statement from disabling the input box
         selectedProperty =  selectedItem ? Object.keys(GlobalVariables.queryPropertyVariables[selectedItem].properties)[0] : ""
     }
 
-    let selectedProperty = "";
-    function receivePropertyChange(event) {
+    let selectedProperty:string|undefined = "";
+    function receivePropertyChange(event):void {
         selectedProperty = event.detail.newValue;
     }
 
-    let selectedTimePeriod = "";
-    function receiveTimePeriodChange(event) {
+    let selectedTimePeriod:string|undefined = "";
+    function receiveTimePeriodChange(event):void {
         selectedTimePeriod = event.detail.newValue;
     }
-    
+
+    let inputBoxValue:string|undefined = "";
+    function receiveValueChange(event):void {
+        inputBoxValue = event.detail.inputValue;
+    }
+
+    let itemsProperties:wikidataPropertiesObject|undefined;
+    let TypeOfPropertyValue:string|undefined;
+
     $: itemsProperties = selectedItem ? GlobalVariables.queryPropertyVariables[selectedItem].properties : undefined
     $: TypeOfPropertyValue = selectedProperty ? itemsProperties[selectedProperty].valueType : undefined;
 
-    $: if (selectedProperty) {tripleStateChange("filled")} else {tripleStateChange("empty")};
+    $: if (selectedProperty) {
+        tripleStateChange("filled");
+    } else {
+        tripleStateChange("empty");
+        inputBoxValue = "";
+    };
     
 </script>
 
@@ -52,13 +66,13 @@
         {#if !itemsProperties[selectedProperty]}
             <input disabled>
         {:else if TypeOfPropertyValue == "string"}
-            <StringInput examples={itemsProperties[selectedProperty].examples} id={id} highestID={highestID}></StringInput>
+            <StringInput examples={itemsProperties[selectedProperty].examples ? Object.keys(itemsProperties[selectedProperty].examples) : []} id={id} on:InputChange={receiveValueChange}></StringInput>
         {:else if TypeOfPropertyValue == "date"}
-            <DateInput on:change={receiveTimePeriodChange}></DateInput>
+            <DateInput on:Periodchange={receiveTimePeriodChange} on:InputChange={receiveValueChange}></DateInput>
         {:else if TypeOfPropertyValue == "number"}
-            <NumberInput></NumberInput>
+            <NumberInput on:InputChange={receiveValueChange}></NumberInput>
         {:else if TypeOfPropertyValue == "link"}
-            <input disabled value="Výsledek bude ve formě odkazu" style="width:250px">
+            <input disabled placeholder="Výsledek bude ve formě odkazu" style="width:250px">
         <!-- An else block isn't required, because everything is default "string" -->
         {/if}
     {/if}
