@@ -14,6 +14,16 @@ export type wikidataPropertiesObject = {
     }
 };
 
+export type selectedTripleDetails = {
+    "tripleID":number,
+    "visibility":boolean,
+    "items":Array<string>,
+    "selectedItem":string,
+    "selectedProperty":string,
+    "selectedTimePeriod"?:string|undefined,
+    "selectedValue":string|number
+}
+
 class GlobalVariables{
     queryPropertyVariables:{[key:string]:wikidataEntitiesObject};
     constructor(){}

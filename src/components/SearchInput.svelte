@@ -2,7 +2,8 @@
     import {createEventDispatcher} from "svelte";
     import InfoSign from "./InfoSign.svelte";
     import GlobalVariables from "./GlobalVariables";
-    import type {selectedTripleDetails} from "./GlobalVariables"
+    import type {selectedTripleDetails} from "./GlobalVariables";
+    import { SPARQLQueryDispatcher } from "./SPARQLQueryDispatcher";
     const dispatch:any = createEventDispatcher();
     
     function handleInputChange(event):void {
@@ -12,15 +13,65 @@
     }
 
     export let tripleDetails:selectedTripleDetails;
-    let examples:Array<string> = Object.keys(GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].examples)
+    // let examples:Array<string> = Object.keys(GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].examples)
+    const queryDispatcher = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
+    let examples:Array<string>|undefined = undefined;
+    let LoadingExamples:boolean = true;
+    $: temp = tripleDetails.selectedProperty
+    $: temp, queryExampleValues();
+    function queryExampleValues() {
+        examples = undefined;
+        LoadingExamples = true;
+        let sparqlQuery = `select distinct ?value ?valueLabel
+            where {
+            {
+                select distinct ?value 
+                where {
+                ?subject wdt:${GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id} ?value.
+                
+                }group by ?value limit 100
+            } 
+            SERVICE wikibase:label { 
+                bd:serviceParam wikibase:language "cs". 
+                ?value rdfs:label ?valueLabel
+            }
+            filter (lang(?valueLabel) = "cs")
+            #   filter (contains(?valueLabel, "Král"@cs))
+            }
+            `;
+        let bigSparqlQuery = `select distinct ?value ?valueLabel
+            where {
+            {
+                select distinct ?value 
+                where {
+                ?subject wdt:${GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id} ?value.
+                
+                }group by ?value limit 2500
+            } 
+            SERVICE wikibase:label { 
+                bd:serviceParam wikibase:language "cs". 
+                ?value rdfs:label ?valueLabel
+            }
+            filter (lang(?valueLabel) = "cs")
+            #   filter (contains(?valueLabel, "Král"@cs))
+            }`
+        queryDispatcher.query(sparqlQuery)
+        .then(data => {examples = data.results.bindings.map(x => x.valueLabel.value); console.log("small", examples.length)})
+        .then(_ => {
+            test();
+            queryDispatcher.query(bigSparqlQuery)
+            .then(data => {examples = data.results.bindings.map(x => x.valueLabel.value); console.log("big", examples.length)})
+            .then(_ => {LoadingExamples = false; test()})
+    })
+    }
 
-    setTimeout(() => {
+    function test() {
         //True types are commented, becuase of ridiculous type requirements (e.g. 56 more required properties)
         let inputBox:any/*HTMLInputElement*/ = document.getElementById("stringInput"+tripleDetails.tripleID);
         let exampleValues:any/*HTMLDataListElement*/ = document.getElementById("examplesDatalist"+tripleDetails.tripleID);
         let container:any/*HTMLDivElement*/ = document.getElementById("stringInputContainer"+tripleDetails.tripleID);
         let currentFocus:number = -1;
-
+        console.log("options loaded", exampleValues.options.length)
         for (let option of exampleValues.options) {
             option.onclick = function ():void {
                 inputBox.value = option.value;
@@ -90,7 +141,7 @@
                 x[i].classList.remove("active");
             }
         }
-    });
+    }
 </script>
 
 <style>
@@ -108,7 +159,7 @@
         font-family: sans-serif;
         width: 350px;
         padding: 5px;
-        max-height: 11rem;
+        max-height: 14rem;
         overflow-y: auto;
     }
 
@@ -143,16 +194,19 @@
 
     
     <datalist id={"examplesDatalist"+tripleDetails.tripleID}>
-        <option value="Chrome">Chrome</option>
-        <option value="Chrome">Chrome</option>
-        <option value="Chrome">Chrome</option>
-        <option value="Firefox">Firefox</option>
-        {#if examples}
+        {#if LoadingExamples}
+            <option value="" disabled>Načítají se další možnosti...</option>  
+            {#if examples}
+                {#each examples as example}
+                    <option value={example}>{example}</option>
+                {/each}
+            {/if}
+        {:else}
             {#each examples as example}
                 <option value={example}>{example}</option>
             {/each}
         {/if}
     </datalist>
 
-    <InfoSign text="Pozor! Je možné, že uložené data nebudou pod stejným názvem, který zadáte"></InfoSign>
+    <InfoSign text="Můžete zadat jiné hodnoty, ale uložené data nemusí být pod stejným názvem!"></InfoSign>
 </div>

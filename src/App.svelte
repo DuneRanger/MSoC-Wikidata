@@ -1,5 +1,7 @@
 <script lang="ts">
-    import InitialButtonManager from "./components/MainManager.svelte";
+    import RDFSTripleSet from "./components/TripleManager.svelte";
+    import GlobalVariables from "./components/GlobalVariables";
+    import type {selectedTripleDetails} from "./components/GlobalVariables";
     const iframeURL:string = 'https://query.wikidata.org/embed.html#';
     let mainQuery:string = `SELECT ?prop ?propname
         WHERE
@@ -16,26 +18,37 @@
 
 
     let iframeVisibility:boolean = false;
-
     function toggleIframe():void {
         iframeVisibility = !iframeVisibility;
     }
     
-    let triples:Array<number> = [0];
 
-    function handleStateChange(event):void {
-        let id:number = event.detail.id;
-        let state:string = event.detail.state;
-        if (state == "filled") {
-            triples[id] = 1;
-            if (triples.reduce((a, b) => a + b) == triples.length && triples.length < 10) triples.push(0);
-        } else if (state == "empty") {
-            triples[id] = 0;
-            // let x = Math.max(triples.lastIndexOf(1),0);
-            // if (x < triples.length-1) triples.splice(x+1,);
-            // console.log(triples.reduce((a, b) => a + b), triples.length, triples)
-            // if (triples.reduce((a, b) => a + b) < triples.length-1) triples = triples.filter(x => x)
-            // console.log(triples.reduce((a, b) => a + b), triples.length, triples)
+    let triples:Array<selectedTripleDetails> = [];
+    const maxTriples = 3;
+    for (let x = 0; x < maxTriples; x++) {
+        triples.push({
+            "tripleID":x,
+            "visibility":false,
+            "items":[],
+            "selectedItem":"",
+            "selectedProperty":"",
+            "selectedValue":""})
+    }
+
+    triples[0].items = GlobalVariables.queryItemVariables;
+    triples[0].visibility = true;
+
+    // let possibleItems = [];
+    
+    function handleTripleDetailsChange(event):void {
+        triples[event.detail.tripleID] = event.detail;
+        let possibleItems:Array<string> = [];
+        for (let triple of triples) {
+            if (triple.selectedItem) possibleItems.push(triple.selectedItem);
+            if (!triple.selectedValue && triple.selectedProperty) possibleItems.push(triple.selectedProperty);
+        }
+        for (let x = 1; x < maxTriples; x++) {
+            triples[x].items = possibleItems;
         }
     }
 
@@ -74,10 +87,10 @@
         </iframe>
     {:else}
         {#each triples as triple, i}
-            <InitialButtonManager id={i} on:stateChange={handleStateChange}></InitialButtonManager>
+            <RDFSTripleSet tripleDetails={triple} on:tripleDetailsChange={handleTripleDetailsChange}></RDFSTripleSet>
         {/each}
-        {#if triples.length == 10}
-            <p style="color:darkred; font-size:24px">Dosáhli jste limitu! (Z důvodů přesnosti)</p>
+        {#if triples.length == maxTriples}
+            <p style="color:darkred; font-size:24px">Dosáhli jste limitu řádků!</p>
         {/if}
         <button id="displayButton" on:click={toggleIframe}><img src="./display.png" width="20px" height="15px" style="padding-right:5px" alt="">Zobrazit</button>
     {/if}
