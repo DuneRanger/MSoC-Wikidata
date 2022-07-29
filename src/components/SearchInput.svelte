@@ -19,7 +19,7 @@
     let LoadingExamples:boolean = true;
     $: temp = tripleDetails.selectedProperty
     $: temp, queryExampleValues();
-    function queryExampleValues() {
+    async function queryExampleValues() {
         examples = undefined;
         LoadingExamples = true;
         let sparqlQuery = `select distinct ?value ?valueLabel
@@ -53,34 +53,44 @@
                 ?value rdfs:label ?valueLabel
             }
             filter (lang(?valueLabel) = "cs")
-            #   filter (contains(?valueLabel, "Král"@cs))
             }`
-        queryDispatcher.query(sparqlQuery)
-        .then(data => {examples = data.results.bindings.map(x => x.valueLabel.value); console.log("small", examples.length)})
-        .then(_ => {
-            test();
-            queryDispatcher.query(bigSparqlQuery)
-            .then(data => {examples = data.results.bindings.map(x => x.valueLabel.value); console.log("big", examples.length)})
-            .then(_ => {LoadingExamples = false; test()})
-    })
+        let smallOutput = queryDispatcher.query(sparqlQuery).then(data => {examples = data.results.bindings.map(x => x.valueLabel.value); console.log("small", examples.length, examples[0])});
+        let bigOutput = queryDispatcher.query(bigSparqlQuery);
+        
+        await smallOutput;
+        renewOnclickEvents();
+        await bigOutput.then(data => {examples = data.results.bindings.map(x => x.valueLabel.value); console.log("big", examples.length, examples[0])});
+        renewOnclickEvents();
+        LoadingExamples = false;
     }
 
-    function test() {
+    function renewOnclickEvents() {
+        let inputBox:any/*HTMLInputElement*/ = document.getElementById("stringInput"+tripleDetails.tripleID);
+        let exampleValues:any/*HTMLDataListElement*/ = document.getElementById("examplesDatalist"+tripleDetails.tripleID);
+        let container:any/*HTMLDivElement*/ = document.getElementById("stringInputContainer"+tripleDetails.tripleID);
+
+        setTimeout(() => {
+            for (let option of exampleValues.options) {
+                option.onclick = function (event):void {
+                    console.log(event)
+                    inputBox.value = option.value;
+                    inputBox.dispatchEvent(new Event("change"));
+                    container.style.zIndex = "0";
+                    exampleValues.style.display = 'none';
+                    inputBox.style.borderRadius = "3px";
+                }
+            };
+        });
+    }
+
+    setTimeout(() => {
         //True types are commented, becuase of ridiculous type requirements (e.g. 56 more required properties)
         let inputBox:any/*HTMLInputElement*/ = document.getElementById("stringInput"+tripleDetails.tripleID);
         let exampleValues:any/*HTMLDataListElement*/ = document.getElementById("examplesDatalist"+tripleDetails.tripleID);
         let container:any/*HTMLDivElement*/ = document.getElementById("stringInputContainer"+tripleDetails.tripleID);
         let currentFocus:number = -1;
-        console.log("options loaded", exampleValues.options.length)
-        for (let option of exampleValues.options) {
-            option.onclick = function ():void {
-                inputBox.value = option.value;
-                inputBox.dispatchEvent(new Event("change"));
-                container.style.zIndex = "0";
-                exampleValues.style.display = 'none';
-                inputBox.style.borderRadius = "3px";
-            }
-        };
+
+        renewOnclickEvents();
 
         inputBox.onfocus = function ():void {
             container.style.zIndex = (100-tripleDetails.tripleID).toString();
@@ -141,7 +151,7 @@
                 x[i].classList.remove("active");
             }
         }
-    }
+    });
 </script>
 
 <style>

@@ -10,7 +10,7 @@
     let selectedPropertyIndex = -1;
 
     import {createEventDispatcher} from "svelte";
-import SearchInput from "./SearchInput.svelte";
+    import SearchInput from "./SearchInput.svelte";
     const dispatch = createEventDispatcher();
 
     function tripleDetailsChange():void {
