@@ -2,7 +2,8 @@
     import InitialButton from "./SingleSelect.svelte";
     import NumberInput from "./NumberInput.svelte";
     import DateInput from "./DateInput.svelte";
-    import StringInput from "./StringInput.svelte";
+    import SearchInput from "./SearchInput.svelte";
+    // import StringInput from "./StringInput.svelte";
     import GlobalVariables from "./GlobalVariables";
     import type {wikidataEntitiesObject, wikidataPropertiesObject, selectedTripleDetails} from "./GlobalVariables";
     
@@ -10,17 +11,19 @@
     let selectedPropertyIndex = -1;
 
     import {createEventDispatcher} from "svelte";
-    import SearchInput from "./SearchInput.svelte";
     const dispatch = createEventDispatcher();
 
     function tripleDetailsChange():void {
+        console.log("here", tripleDetails)
         dispatch("tripleDetailsChange", tripleDetails)
     }
     
     function receiveItemChange(event):void {
         tripleDetails.selectedItem = event.detail.newValue;
         //The browser will change this according to the last ID selected, but this stops the !selectedProperty if statement from disabling the input box
-        tripleDetails.selectedProperty =  (tripleDetails.selectedItem && selectedPropertyIndex > -1) ? Object.keys(GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties)[selectedPropertyIndex] : "";
+        // tripleDetails.selectedProperty =  (tripleDetails.selectedItem && selectedPropertyIndex > -1) ? Object.keys(GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties)[selectedPropertyIndex] : "";
+        tripleDetails.selectedProperty = "";
+        tripleDetails.selectedValue = "";
         tripleDetailsChange();
     }
 
@@ -50,11 +53,11 @@
 </script>
 
 <div style="padding: 8px; z-index:1">
-    <InitialButton items={tripleDetails.items} on:change={receiveItemChange} desc="Hledám: "></InitialButton>
+    <InitialButton items={tripleDetails.items} defaultValue={tripleDetails.selectedItem} on:change={receiveItemChange} desc="Hledám: "></InitialButton>
     {#if !tripleDetails.selectedItem}
         <InitialButton items={[]} desc="Který ..."></InitialButton>
     {:else}    
-        <InitialButton items={Object.keys(itemsProperties)} on:change={receivePropertyChange} desc="Který má/je/se: "></InitialButton>
+        <InitialButton items={Object.keys(itemsProperties)} defaultValue={tripleDetails.selectedProperty} on:change={receivePropertyChange} desc="Který má/je/se: "></InitialButton>
         {#if !itemsProperties[tripleDetails.selectedProperty]}
             <input disabled>
         {:else if TypeOfPropertyValue == "string"}

@@ -24,7 +24,7 @@
     
 
     let triples:Array<selectedTripleDetails> = [];
-    const maxTriples = 3;
+    const maxTriples = 5;
     for (let x = 0; x < maxTriples; x++) {
         triples.push({
             "tripleID":x,
@@ -37,20 +37,37 @@
 
     triples[0].items = GlobalVariables.queryItemVariables;
     triples[0].visibility = true;
-
-    // let possibleItems = [];
     
-    function handleTripleDetailsChange(event):void {
-        triples[event.detail.tripleID] = event.detail;
-        let possibleItems:Array<string> = [];
-        for (let triple of triples) {
-            if (triple.selectedItem) possibleItems.push(triple.selectedItem);
-            if (!triple.selectedValue && triple.selectedProperty) possibleItems.push(triple.selectedProperty);
-        }
+    function updatePossibleItemsForTriples() {
         for (let x = 1; x < maxTriples; x++) {
-            triples[x].items = possibleItems;
+            let possibleItems:Set<string> = new Set();
+            for (let y = 0; y < x; y++) {
+                if (triples[y].selectedItem) possibleItems.add(triples[y].selectedItem);
+                if (!triples[y].selectedValue && triples[y].selectedProperty) possibleItems.add(triples[y].selectedProperty);
+            }
+            triples[x].items = [...possibleItems];
         }
     }
+
+    function handleTripleDetailsChange(event):void {
+        let currentID:number = triples.map(x => x.tripleID).indexOf(event.detail.tripleID)
+        triples[currentID] = event.detail;
+        if (!triples[currentID].selectedItem && !triples[currentID].selectedProperty) {
+            triples[currentID].visibility = false;
+        }
+
+        triples.sort((a, b) => +b.visibility - +a.visibility)
+        console.log(triples)
+        
+        //Has to be its own if statement, to ensure that another triple will be visible
+        if (triples[currentID].selectedProperty) {
+            if (currentID < maxTriples-1) {
+                triples[currentID+1].visibility = true;
+            }
+        }
+        updatePossibleItemsForTriples();
+    }
+
 
 </script>
 
@@ -87,9 +104,11 @@
         </iframe>
     {:else}
         {#each triples as triple, i}
-            <RDFSTripleSet tripleDetails={triple} on:tripleDetailsChange={handleTripleDetailsChange}></RDFSTripleSet>
+            {#if triple.visibility}
+                <RDFSTripleSet tripleDetails={triple} on:tripleDetailsChange={handleTripleDetailsChange}></RDFSTripleSet>
+            {/if}
         {/each}
-        {#if triples.length == maxTriples}
+        {#if triples[maxTriples-1].visibility}
             <p style="color:darkred; font-size:24px">Dosáhli jste limitu řádků!</p>
         {/if}
         <button id="displayButton" on:click={toggleIframe}><img src="./display.png" width="20px" height="15px" style="padding-right:5px" alt="">Zobrazit</button>

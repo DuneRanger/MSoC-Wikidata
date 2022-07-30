@@ -20,14 +20,16 @@
     $: temp = tripleDetails.selectedProperty
     $: temp, queryExampleValues();
     async function queryExampleValues() {
+        if (!tripleDetails.selectedItem || !tripleDetails.selectedProperty) return;
         examples = undefined;
         LoadingExamples = true;
+        let propertyID = GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id;
         let sparqlQuery = `select distinct ?value ?valueLabel
             where {
             {
                 select distinct ?value 
                 where {
-                ?subject wdt:${GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id} ?value.
+                ?subject wdt:${propertyID} ?value.
                 
                 }group by ?value limit 100
             } 
@@ -44,7 +46,7 @@
             {
                 select distinct ?value 
                 where {
-                ?subject wdt:${GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id} ?value.
+                ?subject wdt:${propertyID} ?value.
                 
                 }group by ?value limit 2500
             } 
@@ -54,12 +56,30 @@
             }
             filter (lang(?valueLabel) = "cs")
             }`
-        let smallOutput = queryDispatcher.query(sparqlQuery).then(data => {examples = data.results.bindings.map(x => x.valueLabel.value); console.log("small", examples.length, examples[0])});
-        let bigOutput = queryDispatcher.query(bigSparqlQuery);
+        let smallOutput = queryDispatcher.query(sparqlQuery, propertyID).then(queryJson => {
+            if (queryJson.propertyID == GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id) {
+                examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
+            }
+            console.log("small query for", propertyID)
+        })
+        .catch(err => {
+            examples = [];
+            console.log(err)
+        });
+        let bigOutput = queryDispatcher.query(bigSparqlQuery, propertyID);
         
         await smallOutput;
         renewOnclickEvents();
-        await bigOutput.then(data => {examples = data.results.bindings.map(x => x.valueLabel.value); console.log("big", examples.length, examples[0])});
+        await bigOutput.then(queryJson => {
+            if (queryJson.propertyID == GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id) {
+                examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
+            }
+            console.log("big query for", propertyID)
+        })
+        .catch(err => {
+            examples = [];
+            console.log(err);
+        });
         renewOnclickEvents();
         LoadingExamples = false;
     }
@@ -72,7 +92,6 @@
         setTimeout(() => {
             for (let option of exampleValues.options) {
                 option.onclick = function (event):void {
-                    console.log(event)
                     inputBox.value = option.value;
                     inputBox.dispatchEvent(new Event("change"));
                     container.style.zIndex = "0";
@@ -212,11 +231,17 @@
                 {/each}
             {/if}
         {:else}
-            {#each examples as example}
-                <option value={example}>{example}</option>
-            {/each}
+            <!-- examples will always exist at this point-->
+            {#if examples.length == 0}
+                <option value="" disabled>Nastala chyba při hledání možností</option>
+                <option value="" disabled>Stále můžete zadat hodnoty, které hledáte</option>
+            {:else}
+                {#each examples as example}
+                    <option value={example}>{example}</option>
+                {/each}
+            {/if}
         {/if}
     </datalist>
 
-    <InfoSign text="Můžete zadat jiné hodnoty, ale uložené data nemusí být pod stejným názvem!"></InfoSign>
+    <InfoSign text="Můžete zadat vlastní hodnoty, ale není zaručeno, že je v databázi pod stejným názvem!"></InfoSign>
 </div>
