@@ -1,8 +1,10 @@
 <script lang="ts">
     import {createEventDispatcher} from "svelte";
-    import InfoSign from "./InfoSign.svelte";
     const dispatch:any = createEventDispatcher();
-    
+    import InfoSign from "./InfoSign.svelte";
+
+    export let defaultValue:string|number;
+
     function handleInputChange(event):void {
         dispatch("InputChange", {
             inputValue: event.srcElement.value
@@ -19,6 +21,6 @@
 </style>
 
 <div>
-    <input type="number" style="width:120px" on:change={handleInputChange} placeholder="000">
-    <InfoSign text="Zadejte číslo ve standardních jednotkách"></InfoSign>
+    <input type="number" style="width:120px" value={defaultValue} on:change={handleInputChange} placeholder="000">
+    <InfoSign text="Zadejte číslo ve standardních jednotkách (e.g. cm, kg, km)"></InfoSign>
 </div>

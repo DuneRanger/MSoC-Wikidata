@@ -14,7 +14,6 @@
     const dispatch = createEventDispatcher();
 
     function tripleDetailsChange():void {
-        console.log("here", tripleDetails)
         dispatch("tripleDetailsChange", tripleDetails)
     }
     
@@ -35,7 +34,7 @@
     }
 
     function receiveTimePeriodChange(event):void {
-        tripleDetails.selectedTimePeriod = event.detail.newValue;
+        tripleDetails["selectedTimePeriod"] = event.detail.newValue;
         tripleDetailsChange();
     }
 
@@ -63,9 +62,9 @@
         {:else if TypeOfPropertyValue == "string"}
             <SearchInput tripleDetails={tripleDetails} on:InputChange={receiveValueChange}></SearchInput>
         {:else if TypeOfPropertyValue == "date"}
-            <DateInput on:Periodchange={receiveTimePeriodChange} on:InputChange={receiveValueChange}></DateInput>
+            <DateInput defaultValue={tripleDetails.selectedValue} defaultPeriod={tripleDetails.selectedTimePeriod} on:PeriodChange={receiveTimePeriodChange} on:InputChange={receiveValueChange}></DateInput>
         {:else if TypeOfPropertyValue == "number"}
-            <NumberInput on:InputChange={receiveValueChange}></NumberInput>
+            <NumberInput defaultValue={tripleDetails.selectedValue} on:InputChange={receiveValueChange}></NumberInput>
         {:else if TypeOfPropertyValue == "link"}
             <input disabled placeholder="Výsledek bude ve formě odkazu" style="width:250px">
         <!-- An else block isn't required, because everything is default "string" -->

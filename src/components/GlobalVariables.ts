@@ -10,7 +10,6 @@ export type wikidataPropertiesObject = {
         "id":string,
         "properties"?:wikidataPropertiesObject
         "valueType"?:string
-        "examples"?:wikidataEntitiesObject
     }
 };
 
@@ -35,8 +34,8 @@ class GlobalVariables{
         "Člověk": {
             "id":"Q5",
             "properties": {
-                "Bydliště":{"id":"P551", "valueType":"string", "examples":{"Česká republika":{"id":"Q213"}, "Praha":{"id":"Q1085"}, "Kladno":{"id":"Q155993"}}, get properties() {return GlobalVariables.queryPropertyVariables.Budova.properties}},
-                "Choť":{"id":"P26", "valueType":"string", "examples":{"Já":{"id":"nic"}}, get properties() {return GlobalVariables.queryPropertyVariables.Člověk.properties}},
+                "Bydliště":{"id":"P551", "valueType":"string", get properties() {return GlobalVariables.queryPropertyVariables.Budova.properties}},
+                "Choť":{"id":"P26", "valueType":"string", get properties() {return GlobalVariables.queryPropertyVariables.Člověk.properties}},
                 "Datum křtu":{"id":"P1636", "valueType":"date"},
                 "Datum narození":{"id":"P569", "valueType":"date"},
                 "Datum pohřbu nebo kremace":{"id":"P4602", "valueType":"date"},

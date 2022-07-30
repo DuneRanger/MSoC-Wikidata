@@ -50,21 +50,32 @@
     }
 
     function handleTripleDetailsChange(event):void {
-        let currentID:number = triples.map(x => x.tripleID).indexOf(event.detail.tripleID)
+        let currentID:number = triples.map(x => x.tripleID).indexOf(event.detail.tripleID);
         triples[currentID] = event.detail;
         if (!triples[currentID].selectedItem && !triples[currentID].selectedProperty) {
+            console.log("invis", currentID)
             triples[currentID].visibility = false;
         }
 
         triples.sort((a, b) => +b.visibility - +a.visibility)
-        console.log(triples)
         
+        triples[0].items = GlobalVariables.queryItemVariables;
+        triples[0].visibility = true;
+
         //Has to be its own if statement, to ensure that another triple will be visible
-        if (triples[currentID].selectedProperty) {
-            if (currentID < maxTriples-1) {
-                triples[currentID+1].visibility = true;
+        let lastVisible:number = triples.map(x => x.visibility).lastIndexOf(true);
+        if (triples[lastVisible].selectedProperty) {
+            if (lastVisible < maxTriples-1) {
+                console.log("vis", lastVisible+1)
+                triples[lastVisible+1].visibility = true;
             }
         }
+
+        // triples[0].visibility = true;
+        
+        triples.sort((a, b) => +b.visibility - +a.visibility)
+        console.log(triples)
+        
         updatePossibleItemsForTriples();
     }
 

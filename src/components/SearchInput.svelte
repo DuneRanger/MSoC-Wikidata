@@ -13,7 +13,7 @@
     }
 
     export let tripleDetails:selectedTripleDetails;
-    // let examples:Array<string> = Object.keys(GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].examples)
+
     const queryDispatcher = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
     let examples:Array<string>|undefined = undefined;
     let LoadingExamples:boolean = true;
@@ -64,7 +64,7 @@
         })
         .catch(err => {
             examples = [];
-            console.log(err)
+            console.log(err, tripleDetails)
         });
         let bigOutput = queryDispatcher.query(bigSparqlQuery, propertyID);
         
@@ -78,7 +78,7 @@
         })
         .catch(err => {
             examples = [];
-            console.log(err);
+            console.log(err, tripleDetails);
         });
         renewOnclickEvents();
         LoadingExamples = false;
@@ -91,7 +91,7 @@
 
         setTimeout(() => {
             for (let option of exampleValues.options) {
-                option.onclick = function (event):void {
+                option.onclick = function ():void {
                     inputBox.value = option.value;
                     inputBox.dispatchEvent(new Event("change"));
                     container.style.zIndex = "0";
@@ -218,7 +218,7 @@
 <!-- This has to exist, so that svelte compiles the css for .active -->
 
 <div id={"stringInputContainer"+tripleDetails.tripleID}>
-    <input list="" id={"stringInput"+tripleDetails.tripleID} role="combobox" placeholder="Prázdné pole = Jakákoliv hodnota" on:change={handleInputChange}>
+    <input list="" id={"stringInput"+tripleDetails.tripleID} value={tripleDetails.selectedValue} placeholder="Prázdné pole = Jakákoliv hodnota" on:change={handleInputChange}>
     <!-- Its important that you keep list attribute empty to hide the default dropdown icon and the browser's default datalist -->
 
     

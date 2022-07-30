@@ -3,6 +3,10 @@
     import InfoSign from "./InfoSign.svelte";
     const dispatch = createEventDispatcher();
     
+    export let defaultValue:string|number;
+    export let defaultPeriod:string;
+
+
     function handleInputChange(event) {
         dispatch("InputChange", {
             inputValue: event.srcElement.value
@@ -26,11 +30,11 @@
 </style>
 
 <div>
-    <select on:change={handlePeriodChange}>
+    <select on:change={handlePeriodChange} value={defaultPeriod ? defaultPeriod : "Před"}>
         <option value="Před">Před</option>
         <option value="Po">Po</option>
         <option value="Přesně">Přesně</option>
     </select>
-    <input type="date" on:change={handleInputChange} placeholder="">
-    <InfoSign text="Musíte zadat celý datum, aby byl validní"></InfoSign>
+    <input type="date" value={defaultValue}   on:change={handleInputChange} placeholder="">
+    <InfoSign text="Musíte zadat celý datum, aby se uložil"></InfoSign>
 </div>

@@ -15,7 +15,7 @@
 </script>
 
 {desc}
-<select on:input={handleEvent}>
+<select on:input={handleEvent} style="width:auto">
     {#if items}
         {#if !defaultValue}
             <option value="default" selected disabled hidden>Klikni pro výběr</option>
