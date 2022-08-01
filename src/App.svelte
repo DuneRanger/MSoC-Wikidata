@@ -24,13 +24,13 @@
     
 
     let triples:Array<selectedTripleDetails> = [];
-    const maxTriples = 5;
+    const maxTriples = 15;
     for (let x = 0; x < maxTriples; x++) {
         triples.push({
             "tripleID":x,
             "visibility":false,
             "items":[],
-            "selectedItem":"",
+            "selectedItem":"Člověk",
             "selectedProperty":"",
             "selectedValue":""})
     }
@@ -53,7 +53,7 @@
         let currentID:number = triples.map(x => x.tripleID).indexOf(event.detail.tripleID);
         triples[currentID] = event.detail;
         if (!triples[currentID].selectedItem && !triples[currentID].selectedProperty) {
-            console.log("invis", currentID)
+            console.log("invis", currentID);
             triples[currentID].visibility = false;
         }
 
@@ -66,15 +66,13 @@
         let lastVisible:number = triples.map(x => x.visibility).lastIndexOf(true);
         if (triples[lastVisible].selectedProperty) {
             if (lastVisible < maxTriples-1) {
-                console.log("vis", lastVisible+1)
+                console.log("vis", lastVisible+1);
                 triples[lastVisible+1].visibility = true;
             }
         }
-
-        // triples[0].visibility = true;
         
-        triples.sort((a, b) => +b.visibility - +a.visibility)
-        console.log(triples)
+        triples.sort((a, b) => +b.visibility - +a.visibility);
+        console.log(triples);
         
         updatePossibleItemsForTriples();
     }
@@ -83,20 +81,23 @@
 </script>
 
 <style>
-    body {
+    main {
         background-color: grey;
+        min-height: 100vh;
     }
     
     #displayButton {
-        position: absolute;
+        position: sticky;
+        scroll-behavior: auto;
         background-color: #81e62e;
         border-color: #105321;
         border-radius: 5px;
         border-width: 2px;
         transform: scale(1.3);
         margin: 1em;
-        right:    1%;
-        bottom:   1%;
+        padding-right:5px;
+        top: 92vh;
+        left: 92vw;
     }
 
     #wikidataIframe {
@@ -108,7 +109,7 @@
 
 </style>
 
-<body>
+<main>
     {#if iframeVisibility}
         <button id="backButton" on:click={toggleIframe}>🔙</button>
         <iframe id="wikidataIframe" style="width: 90vw; height: 90vh; border: none;" title="wikidata" src={encodedLink} referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups">
@@ -119,10 +120,10 @@
                 <RDFSTripleSet tripleDetails={triple} on:tripleDetailsChange={handleTripleDetailsChange}></RDFSTripleSet>
             {/if}
         {/each}
-        {#if triples[maxTriples-1].visibility}
-            <p style="color:darkred; font-size:24px">Dosáhli jste limitu řádků!</p>
-        {/if}
-        <button id="displayButton" on:click={toggleIframe}><img src="./display.png" width="20px" height="15px" style="padding-right:5px" alt="">Zobrazit</button>
+            {#if triples[maxTriples-1].visibility}
+                <p style="color:darkred; font-size:24px; position: absolute; margin: 10px;">Dosáhli jste limitu řádků!</p>
+            {/if}
+        <button id="displayButton" on:click={toggleIframe}><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
     {/if}
-</body>
+</main>
   
