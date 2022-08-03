@@ -30,7 +30,7 @@
             "tripleID":x,
             "visibility":false,
             "items":[],
-            "selectedItem":"Člověk",
+            "selectedItem":"",
             "selectedProperty":"",
             "selectedValue":""})
     }
@@ -54,16 +54,41 @@
                 triples[x].selectedProperty = "";
             }
         }
+        triples[0].items = GlobalVariables.queryItemVariables;
+        if (triples[0].items.indexOf(triples[0].selectedItem) < 0) {
+            triples[0].selectedItem = "";
+            triples[0].selectedProperty = "";
+        }
+    }
+
+    function cleanupVisibilty() {
+        let lastVisible:number = triples.map(x => x.visibility).lastIndexOf(true);
+        for (let x in triples) {
+            if (triples[x].visibility && !triples[x].selectedItem && +x != lastVisible) {
+                triples[x].visibility = false;
+            }
+        }
+        triples.sort((a, b) => +b.visibility - +a.visibility);
+        updatePossibleItemsForTriples();
+
+        lastVisible = triples.map(x => x.visibility).lastIndexOf(true);
+        for (let x in triples) {
+            if (triples[x].visibility && !triples[x].selectedItem && +x != lastVisible) {
+                triples[x].visibility = false;
+            }
+        }
+        updatePossibleItemsForTriples();
+        triples.sort((a, b) => +b.visibility - +a.visibility);
     }
 
     function handleTripleDetailsChange(event):void {
         let currentID:number = triples.map(x => x.tripleID).indexOf(event.detail.tripleID);
+        console.log(currentID)
         triples[currentID] = event.detail;
         if (!triples[currentID].selectedItem && !triples[currentID].selectedProperty) {
             console.log("invis", currentID);
             triples[currentID].visibility = false;
         }
-
         triples.sort((a, b) => +b.visibility - +a.visibility)
         
         triples[0].items = GlobalVariables.queryItemVariables;
@@ -77,10 +102,10 @@
                 triples[lastVisible+1].visibility = true;
             }
         }
-        
         triples.sort((a, b) => +b.visibility - +a.visibility);
-        
+
         updatePossibleItemsForTriples();
+        cleanupVisibilty();
     }
 
 
