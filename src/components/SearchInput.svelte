@@ -23,7 +23,7 @@
         if (!tripleDetails.selectedItem || !tripleDetails.selectedProperty) return;
         examples = undefined;
         LoadingExamples = true;
-        let propertyID = GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id;
+        let propertyID = GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id;
         let sparqlQuery = `select distinct ?value ?valueLabel
             where {
             {
@@ -57,10 +57,10 @@
             filter (lang(?valueLabel) = "cs")
             }`
         let smallOutput = queryDispatcher.query(sparqlQuery, propertyID).then(queryJson => {
-            if (queryJson.propertyID == GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id) {
+            if (queryJson.propertyID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
                 examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
             }
-            console.log("small query for", propertyID)
+            console.log("small query for: " + tripleDetails.selectedProperty + " (" + propertyID + ")")
         })
         .catch(err => {
             examples = [];
@@ -71,10 +71,10 @@
         await smallOutput;
         renewOnclickEvents();
         await bigOutput.then(queryJson => {
-            if (queryJson.propertyID == GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties[tripleDetails.selectedProperty].id) {
+            if (queryJson.propertyID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
                 examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
             }
-            console.log("big query for", propertyID)
+            console.log("big query for " + tripleDetails.selectedProperty + " (" + propertyID + ")")
         })
         .catch(err => {
             examples = [];
@@ -175,7 +175,7 @@
 
 <style>
     input {
-        /* Changing this with requires changing datalist.width and the css in InfoSign.svelt */
+        /* Changing this width requires changing datalist.width */
         width: 362px;
         margin: 0;
         outline: 1px;

@@ -43,9 +43,16 @@
             let possibleItems:Set<string> = new Set();
             for (let y = 0; y < x; y++) {
                 if (triples[y].selectedItem) possibleItems.add(triples[y].selectedItem);
-                if (!triples[y].selectedValue && triples[y].selectedProperty) possibleItems.add(triples[y].selectedProperty);
+                if (!triples[y].selectedValue && triples[y].selectedProperty) {
+                    if (GlobalVariables.queryEntityProperties.hasOwnProperty(triples[y].selectedProperty))
+                        possibleItems.add(triples[y].selectedProperty);
+                }
             }
             triples[x].items = [...possibleItems];
+            if (triples[x].items.indexOf(triples[x].selectedItem) < 0) {
+                triples[x].selectedItem = "";
+                triples[x].selectedProperty = "";
+            }
         }
     }
 
@@ -72,7 +79,6 @@
         }
         
         triples.sort((a, b) => +b.visibility - +a.visibility);
-        console.log(triples);
         
         updatePossibleItemsForTriples();
     }

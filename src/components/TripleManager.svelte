@@ -5,7 +5,7 @@
     import SearchInput from "./SearchInput.svelte";
     // import StringInput from "./StringInput.svelte";
     import GlobalVariables from "./GlobalVariables";
-    import type {wikidataEntitiesObject, wikidataPropertiesObject, selectedTripleDetails} from "./GlobalVariables";
+    import type {selectedTripleDetails} from "./GlobalVariables";
     
     export let tripleDetails:selectedTripleDetails;
     let selectedPropertyIndex = -1;
@@ -43,11 +43,11 @@
         tripleDetailsChange();
     }
 
-    let itemsProperties:wikidataPropertiesObject|undefined;
+    let itemsProperties:Array<string>|undefined;
     let TypeOfPropertyValue:string|undefined;
 
-    $: itemsProperties = tripleDetails.selectedItem ? GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties : undefined;
-    $: TypeOfPropertyValue = tripleDetails.selectedProperty ? itemsProperties[tripleDetails.selectedProperty].valueType : undefined;
+    $: itemsProperties = tripleDetails.selectedItem ? GlobalVariables.queryEntityProperties[tripleDetails.selectedItem] : undefined;
+    $: TypeOfPropertyValue = tripleDetails.selectedProperty ? GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].valueType : undefined;
     
 </script>
 
@@ -56,8 +56,9 @@
     {#if !tripleDetails.selectedItem}
         <InitialButton items={[]} desc="Který ..."></InitialButton>
     {:else}    
-        <InitialButton items={Object.keys(itemsProperties)} defaultValue={tripleDetails.selectedProperty} on:change={receivePropertyChange} desc="Který má/je/se: "></InitialButton>
-        {#if !itemsProperties[tripleDetails.selectedProperty]}
+        <InitialButton items={itemsProperties} defaultValue={tripleDetails.selectedProperty} on:change={receivePropertyChange} desc="Který má/je/se: "></InitialButton>
+        <!-- At this point itemsProperties will always be defined -->
+        {#if !itemsProperties.includes(tripleDetails.selectedProperty)}
             <input disabled>
         {:else if TypeOfPropertyValue == "string"}
             <SearchInput tripleDetails={tripleDetails} on:InputChange={receiveValueChange}></SearchInput>
