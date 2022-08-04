@@ -39,36 +39,51 @@
     triples[0].visibility = true;
     
     function updatePossibleItemsForTriples() {
-        for (let x = 1; x < maxTriples; x++) {
-            let possibleItems:Set<string> = new Set();
-            for (let y = 0; y < x; y++) {
-                if (triples[y].selectedItem) possibleItems.add(triples[y].selectedItem);
-                if (!triples[y].selectedValue && triples[y].selectedProperty) {
-                    if (GlobalVariables.queryEntityProperties.hasOwnProperty(triples[y].selectedProperty))
-                        possibleItems.add(triples[y].selectedProperty);
-                }
-            }
-            triples[x].items = [...possibleItems];
-            if (triples[x].items.indexOf(triples[x].selectedItem) < 0) {
-                triples[x].selectedItem = "";
-                triples[x].selectedProperty = "";
-            }
-        }
+        // console.log([...triples])
         triples[0].items = GlobalVariables.queryItemVariables;
         if (triples[0].items.indexOf(triples[0].selectedItem) < 0) {
             triples[0].selectedItem = "";
             triples[0].selectedProperty = "";
         }
+        let possibleItems:Set<string> = new Set();
+        for (let x = 0; x < maxTriples-1; x++) {
+            // for (let y = 0; y < x; y++) {
+            if (triples[x].selectedItem) possibleItems.add(triples[x].selectedItem);
+            if (!triples[x].selectedValue && triples[x].selectedProperty) {
+                if (GlobalVariables.queryEntityProperties.hasOwnProperty(triples[x].selectedProperty))
+                    possibleItems.add(triples[x].selectedProperty);
+            }
+            // }
+            triples[x+1].items = [...possibleItems];
+            if (!GlobalVariables.queryItemVariables.includes(triples[x+1].selectedItem) && triples[x+1].items.indexOf(triples[x+1].selectedItem) < 0) {
+                triples[x+1].selectedItem = "";
+                triples[x+1].selectedProperty = "";
+            }
+        }
     }
 
-    function cleanupVisibilty() {
+
+
+    function handleTripleDetailsChange(event):void {
+        let currentID:number = triples.map(x => x.tripleID).indexOf(event.detail.tripleID);
+        triples[currentID] = event.detail;
+        if (!triples[currentID].selectedItem && !triples[currentID].selectedProperty) {
+            triples[currentID].visibility = false;
+        }
+        triples.sort((a, b) => +b.visibility - +a.visibility)
+        
+        triples[0].items = GlobalVariables.queryItemVariables;
+        triples[0].visibility = true;
+
+        // Has to be its own if statement, to ensure that another triple will be visible
         let lastVisible:number = triples.map(x => x.visibility).lastIndexOf(true);
-        for (let x in triples) {
-            if (triples[x].visibility && !triples[x].selectedItem && +x != lastVisible) {
-                triples[x].visibility = false;
+        if (triples[lastVisible].selectedProperty) {
+            if (lastVisible < maxTriples-1) {
+                triples[lastVisible+1].visibility = true;
             }
         }
         triples.sort((a, b) => +b.visibility - +a.visibility);
+
         updatePossibleItemsForTriples();
 
         lastVisible = triples.map(x => x.visibility).lastIndexOf(true);
@@ -77,35 +92,8 @@
                 triples[x].visibility = false;
             }
         }
-        updatePossibleItemsForTriples();
         triples.sort((a, b) => +b.visibility - +a.visibility);
-    }
-
-    function handleTripleDetailsChange(event):void {
-        let currentID:number = triples.map(x => x.tripleID).indexOf(event.detail.tripleID);
-        console.log(currentID)
-        triples[currentID] = event.detail;
-        if (!triples[currentID].selectedItem && !triples[currentID].selectedProperty) {
-            console.log("invis", currentID);
-            triples[currentID].visibility = false;
-        }
-        triples.sort((a, b) => +b.visibility - +a.visibility)
-        
         triples[0].items = GlobalVariables.queryItemVariables;
-        triples[0].visibility = true;
-
-        //Has to be its own if statement, to ensure that another triple will be visible
-        let lastVisible:number = triples.map(x => x.visibility).lastIndexOf(true);
-        if (triples[lastVisible].selectedProperty) {
-            if (lastVisible < maxTriples-1) {
-                console.log("vis", lastVisible+1);
-                triples[lastVisible+1].visibility = true;
-            }
-        }
-        triples.sort((a, b) => +b.visibility - +a.visibility);
-
-        updatePossibleItemsForTriples();
-        cleanupVisibilty();
     }
 
 
