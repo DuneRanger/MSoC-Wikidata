@@ -262,30 +262,7 @@ async function main() {
 
     document.body.style = "font-size: 12px";
     document.body.innerHTML = queryPropertyVariables.replace(/\n/g, "<br>") + "<br><br>" + queryVariableInfo.replace(/\n/g, "<br>");
-        
-    //         let copyButton = document.createElement("button");
-    //         copyButton.innerHTML = "Click to copy"
-    //         copyButton.onclick = () => {
-    //             const elem = document.createElement('textarea');
-    //             elem.value = output;
-    //             document.body.appendChild(elem);
-    //             elem.select();
-    //             document.execCommand('copy');
-    //             document.body.removeChild(elem);
-    //             window.prompt("Query Results Copied", output)
-    //         }
-    //         document.body.append(copyButton)
-    
-    //         let backButton = document.createElement("button");
-    //         backButton.innerHTML = "Click to go back";
-    //         backButton.onclick = () => {
-    //             document.body.innerHTML = ""
-    //             document.body.appendChild(buttonForProperties);
-    //             document.body.appendChild(buttonForDetails);
-    //         }
-    //         document.body.appendChild(backButton);
-    //     });
-    // }
+
 }
 
 main();

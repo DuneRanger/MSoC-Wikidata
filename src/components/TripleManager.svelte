@@ -38,8 +38,18 @@
         tripleDetailsChange();
     }
 
+    function receiveNumberIntervalChange(event):void {
+        tripleDetails["selectedNumberInterval"] = event.detail.newValue;
+        tripleDetailsChange();
+    }
+
     function receiveValueChange(event):void {
         tripleDetails.selectedValue = event.detail.inputValue;
+        tripleDetailsChange();
+    }
+
+    function receiveTimePrecisionChange(event):void {
+        tripleDetails["selectedTimePrecision"] = event.detail.newValue;
         tripleDetailsChange();
     }
 
@@ -63,9 +73,9 @@
         {:else if TypeOfPropertyValue == "string"}
             <SearchInput tripleDetails={tripleDetails} on:InputChange={receiveValueChange}></SearchInput>
         {:else if TypeOfPropertyValue == "date"}
-            <DateInput defaultValue={tripleDetails.selectedValue} defaultPeriod={tripleDetails.selectedTimePeriod} on:PeriodChange={receiveTimePeriodChange} on:InputChange={receiveValueChange}></DateInput>
+            <DateInput tripleDetails={tripleDetails} on:PeriodChange={receiveTimePeriodChange} on:InputChange={receiveValueChange} on:PrecisionChange={receiveTimePrecisionChange}></DateInput>
         {:else if TypeOfPropertyValue == "number"}
-            <NumberInput defaultValue={tripleDetails.selectedValue} on:InputChange={receiveValueChange}></NumberInput>
+            <NumberInput tripleDetails={tripleDetails} on:IntervalChange={receiveNumberIntervalChange} on:InputChange={receiveValueChange}></NumberInput>
         {:else if TypeOfPropertyValue == "link"}
             <input disabled placeholder="Výsledek bude ve formě odkazu" style="width:250px">
         <!-- An else block isn't required, because everything is default "string" -->

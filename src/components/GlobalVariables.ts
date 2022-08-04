@@ -16,6 +16,8 @@ export type selectedTripleDetails = {
     "selectedItem":string,
     "selectedProperty":string,
     "selectedTimePeriod"?:string|undefined,
+    "selectedTimePrecision"?:string|undefined,
+    "selectedNumberInterval"?:string|undefined,
     "selectedValue":string|number
 }
 

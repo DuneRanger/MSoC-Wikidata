@@ -2,9 +2,13 @@
     import {createEventDispatcher} from "svelte";
     import InfoSign from "./InfoSign.svelte";
     const dispatch = createEventDispatcher();
-    
-    export let defaultValue:string|number;
-    export let defaultPeriod:string;
+    import type {selectedTripleDetails} from "./GlobalVariables"
+
+    export let tripleDetails:selectedTripleDetails;
+
+    let defaultValue:string|number = tripleDetails.selectedValue;
+    let defaultPeriod:string = tripleDetails.selectedTimePeriod;
+    let defaultPrecision:string = tripleDetails.selectedTimePrecision;
 
 
     function handleInputChange(event) {
@@ -15,6 +19,12 @@
 
     function handlePeriodChange(event) {
         dispatch("PeriodChange", {
+            newValue: event.srcElement.value
+        })
+    }
+
+    function handlePrecisionChange(event) {
+        dispatch("PrecisionChange", {
             newValue: event.srcElement.value
         })
     }
@@ -30,6 +40,13 @@
 </style>
 
 <div>
+    S přesností:
+    <select on:change={handlePrecisionChange} value={defaultPrecision ? defaultPrecision : "Rok"}>
+        <option value="Století">Století</option>
+        <option value="Rok">Rok</option>
+        <option value="Měsíc">Měsíc</option>
+        <option value="Den">Den</option>
+    </select>
     <select on:change={handlePeriodChange} value={defaultPeriod ? defaultPeriod : "Před"}>
         <option value="Před">Před</option>
         <option value="Po">Po</option>
