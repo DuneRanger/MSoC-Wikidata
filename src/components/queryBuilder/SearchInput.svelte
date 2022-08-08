@@ -1,30 +1,31 @@
 <script lang="ts">
     import {createEventDispatcher} from "svelte";
     import InfoSign from "./InfoSign.svelte";
-    import GlobalVariables from "./GlobalVariables";
-    import type {selectedTripleDetails} from "./GlobalVariables";
-    import { SPARQLQueryDispatcher } from "./SPARQLQueryDispatcher";
+    import GlobalVariables from "./../GlobalVariables";
+    import type {selectedTripleDetails} from "./../GlobalVariables";
+    import { SPARQLQueryDispatcher } from "./../SPARQLQueryDispatcher";
     const dispatch:any = createEventDispatcher();
     
     function handleInputChange(event):void {
         dispatch("InputChange", {
             inputValue: event.srcElement.value
-        })
+        });
     }
 
     export let tripleDetails:selectedTripleDetails;
 
-    const queryDispatcher = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
+    const queryDispatcher:any = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
     let examples:Array<string>|undefined = undefined;
     let LoadingExamples:boolean = true;
-    $: temp = tripleDetails.selectedProperty
+
+    $: temp = tripleDetails.selectedProperty;
     $: temp, queryExampleValues();
     async function queryExampleValues() {
         if (!tripleDetails.selectedItem || !tripleDetails.selectedProperty) return;
         examples = undefined;
         LoadingExamples = true;
-        let propertyID = GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id;
-        let sparqlQuery = `select distinct ?value ?valueLabel
+        let propertyID:string = GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id;
+        let sparqlQuery:string = `select distinct ?value ?valueLabel
             where {
             {
                 select distinct ?value 
@@ -39,9 +40,8 @@
             }
             filter (lang(?valueLabel) = "cs")
             #   filter (contains(?valueLabel, "Král"@cs))
-            }
-            `;
-        let bigSparqlQuery = `select distinct ?value ?valueLabel
+            }`;
+        let bigSparqlQuery:string = `select distinct ?value ?valueLabel
             where {
             {
                 select distinct ?value 
@@ -55,18 +55,18 @@
                 ?value rdfs:label ?valueLabel
             }
             filter (lang(?valueLabel) = "cs")
-            }`
-        let smallOutput = queryDispatcher.query(sparqlQuery, propertyID).then(queryJson => {
+            }`;
+        let smallOutput:Promise<{propertyID:string,data:any}> = queryDispatcher.query(sparqlQuery, propertyID).then(queryJson => {
             if (queryJson.propertyID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
                 examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
             }
-            console.log("small query for: " + tripleDetails.selectedProperty + " (" + propertyID + ")")
+            console.log("small query for: " + tripleDetails.selectedProperty + " (" + propertyID + ")");
         })
         .catch(err => {
             examples = [];
-            console.log(err, tripleDetails)
+            console.log(err, tripleDetails);
         });
-        let bigOutput = queryDispatcher.query(bigSparqlQuery, propertyID);
+        let bigOutput:Promise<{propertyID:string,data:any}> = queryDispatcher.query(bigSparqlQuery, propertyID);
         
         await smallOutput;
         renewOnclickEvents();
@@ -74,7 +74,7 @@
             if (queryJson.propertyID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
                 examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
             }
-            console.log("big query for " + tripleDetails.selectedProperty + " (" + propertyID + ")")
+            console.log("big query for " + tripleDetails.selectedProperty + " (" + propertyID + ")");
         })
         .catch(err => {
             examples = [];
@@ -84,7 +84,8 @@
         LoadingExamples = false;
     }
 
-    function renewOnclickEvents() {
+    function renewOnclickEvents():void {
+        //HTML type is not used due to each element not having the same amount of properties
         let inputBox:any/*HTMLInputElement*/ = document.getElementById("stringInput"+tripleDetails.tripleID);
         let exampleValues:any/*HTMLDataListElement*/ = document.getElementById("examplesDatalist"+tripleDetails.tripleID);
         let container:any/*HTMLDivElement*/ = document.getElementById("stringInputContainer"+tripleDetails.tripleID);

@@ -2,7 +2,7 @@
     import {createEventDispatcher} from "svelte";
     const dispatch:any = createEventDispatcher();
     import InfoSign from "./InfoSign.svelte";
-    import type {selectedTripleDetails} from "./GlobalVariables"
+    import type {selectedTripleDetails} from "./../GlobalVariables";
 
     export let tripleDetails:selectedTripleDetails;
 
@@ -12,13 +12,13 @@
     function handleInputChange(event):void {
         dispatch("InputChange", {
             inputValue: event.srcElement.value
-        })
+        });
     }
 
-    function handleIntervalChange(event) {
+    function handleIntervalChange(event):void {
         dispatch("IntervalChange", {
             newValue: event.srcElement.value
-        })
+        });
     }
 </script>
 

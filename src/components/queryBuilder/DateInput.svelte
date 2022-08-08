@@ -1,8 +1,8 @@
 <script lang="ts">
     import {createEventDispatcher} from "svelte";
     import InfoSign from "./InfoSign.svelte";
-    const dispatch = createEventDispatcher();
-    import type {selectedTripleDetails} from "./GlobalVariables"
+    const dispatch:any = createEventDispatcher();
+    import type {selectedTripleDetails} from "./../GlobalVariables";
 
     export let tripleDetails:selectedTripleDetails;
 
@@ -11,22 +11,22 @@
     let defaultPrecision:string = tripleDetails.selectedTimePrecision;
 
 
-    function handleInputChange(event) {
+    function handleInputChange(event):void {
         dispatch("InputChange", {
             inputValue: event.srcElement.value
-        })
+        });
     }
 
-    function handlePeriodChange(event) {
+    function handlePeriodChange(event):void {
         dispatch("PeriodChange", {
             newValue: event.srcElement.value
-        })
+        });
     }
 
-    function handlePrecisionChange(event) {
+    function handlePrecisionChange(event):void {
         dispatch("PrecisionChange", {
             newValue: event.srcElement.value
-        })
+        });
     }
 
 </script>

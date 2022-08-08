@@ -1,26 +1,24 @@
 <script lang="ts">
-    import InitialButton from "./SingleSelect.svelte";
+    import InitialButton from "./BasicSelectInput.svelte";
     import NumberInput from "./NumberInput.svelte";
     import DateInput from "./DateInput.svelte";
     import SearchInput from "./SearchInput.svelte";
     // import StringInput from "./StringInput.svelte";
-    import GlobalVariables from "./GlobalVariables";
-    import type {selectedTripleDetails} from "./GlobalVariables";
+    import GlobalVariables from "./../GlobalVariables";
+    import type {selectedTripleDetails} from "./../GlobalVariables";
     
     export let tripleDetails:selectedTripleDetails;
-    let selectedPropertyIndex = -1;
+    let selectedPropertyIndex:number = -1;
 
     import {createEventDispatcher} from "svelte";
-    const dispatch = createEventDispatcher();
+    const dispatch:any = createEventDispatcher();
 
     function tripleDetailsChange():void {
-        dispatch("tripleDetailsChange", tripleDetails)
+        dispatch("tripleDetailsChange", tripleDetails);
     }
     
     function receiveItemChange(event):void {
         tripleDetails.selectedItem = event.detail.newValue;
-        //The browser will change this according to the last ID selected, but this stops the !selectedProperty if statement from disabling the input box
-        // tripleDetails.selectedProperty =  (tripleDetails.selectedItem && selectedPropertyIndex > -1) ? Object.keys(GlobalVariables.queryPropertyVariables[tripleDetails.selectedItem].properties)[selectedPropertyIndex] : "";
         tripleDetails.selectedProperty = "";
         tripleDetails.selectedValue = "";
         tripleDetailsChange();

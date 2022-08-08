@@ -18,7 +18,7 @@
 <select on:input={handleEvent} style="width:auto">
     {#if items}
         {#if !defaultValue}
-            <option value="default" selected disabled hidden>Klikni pro výběr</option>
+            <option value="" selected disabled hidden>Klikni pro výběr</option>
             <option value="" >-</option>
             {#each items as item}
                 <option value={item}>{item}</option>

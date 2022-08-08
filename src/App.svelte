@@ -1,30 +1,18 @@
 <script lang="ts">
-    import RDFSTripleSet from "./components/TripleManager.svelte";
+    import RDFSTripleSet from "./components/queryBuilder/IndividualTripleManager.svelte";
+    import ResultsDisplay from "./components/queryResults/finalDisplay.svelte"
     import GlobalVariables from "./components/GlobalVariables";
     import type {selectedTripleDetails} from "./components/GlobalVariables";
-    const iframeURL:string = 'https://query.wikidata.org/embed.html#';
-    let mainQuery:string = `SELECT ?prop ?propname
-        WHERE
-        {
-        wd:Q5 wdt:P1963 ?prop .
-        
-        SERVICE wikibase:label { 
-        bd:serviceParam wikibase:language "cs" .
-        ?prop rdfs:label ?propname .
-        }
-        } ORDER BY(?propname)`;
-    let encodedLink:string;
-    $: encodedLink = iframeURL + encodeURIComponent(mainQuery);
 
 
-    let iframeVisibility:boolean = false;
+    let resultsVisibility:boolean = false;
     function toggleIframe():void {
-        iframeVisibility = !iframeVisibility;
+        resultsVisibility = !resultsVisibility;
     }
     
 
     let triples:Array<selectedTripleDetails> = [];
-    const maxTriples = 15;
+    const maxTriples:number = 9;
     for (let x = 0; x < maxTriples; x++) {
         triples.push({
             "tripleID":x,
@@ -38,8 +26,7 @@
     triples[0].items = GlobalVariables.queryItemVariables;
     triples[0].visibility = true;
     
-    function updatePossibleItemsForTriples() {
-        // console.log([...triples])
+    function updatePossibleItemsForTriples():void {
         triples[0].items = GlobalVariables.queryItemVariables;
         if (triples[0].items.indexOf(triples[0].selectedItem) < 0) {
             triples[0].selectedItem = "";
@@ -47,13 +34,12 @@
         }
         let possibleItems:Set<string> = new Set();
         for (let x = 0; x < maxTriples-1; x++) {
-            // for (let y = 0; y < x; y++) {
             if (triples[x].selectedItem) possibleItems.add(triples[x].selectedItem);
             if (!triples[x].selectedValue && triples[x].selectedProperty) {
-                if (GlobalVariables.queryEntityProperties.hasOwnProperty(triples[x].selectedProperty))
+                if (GlobalVariables.queryEntityProperties.hasOwnProperty(triples[x].selectedProperty)) {
                     possibleItems.add(triples[x].selectedProperty);
+                }
             }
-            // }
             triples[x+1].items = [...possibleItems];
             if (!GlobalVariables.queryItemVariables.includes(triples[x+1].selectedItem) && triples[x+1].items.indexOf(triples[x+1].selectedItem) < 0) {
                 triples[x+1].selectedItem = "";
@@ -70,7 +56,7 @@
         if (!triples[currentID].selectedItem && !triples[currentID].selectedProperty) {
             triples[currentID].visibility = false;
         }
-        triples.sort((a, b) => +b.visibility - +a.visibility)
+        triples.sort((a, b) => +b.visibility - +a.visibility);
         
         triples[0].items = GlobalVariables.queryItemVariables;
         triples[0].visibility = true;
@@ -118,30 +104,21 @@
         top: 92vh;
         left: 92vw;
     }
-
-    #wikidataIframe {
-        position: absolute;
-        left: 50%;
-        top: 30%;
-        transform: translate(-50%, -30%);
-    }
-
 </style>
 
 <main>
-    {#if iframeVisibility}
+    {#if resultsVisibility}
         <button id="backButton" on:click={toggleIframe}>🔙</button>
-        <iframe id="wikidataIframe" style="width: 90vw; height: 90vh; border: none;" title="wikidata" src={encodedLink} referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups">
-        </iframe>
+        <ResultsDisplay triples={triples}></ResultsDisplay>
     {:else}
-        {#each triples as triple, i}
+        {#each triples as triple}
             {#if triple.visibility}
                 <RDFSTripleSet tripleDetails={triple} on:tripleDetailsChange={handleTripleDetailsChange}></RDFSTripleSet>
             {/if}
         {/each}
-            {#if triples[maxTriples-1].visibility}
-                <p style="color:darkred; font-size:24px; position: absolute; margin: 10px;">Dosáhli jste limitu řádků!</p>
-            {/if}
+        {#if triples[maxTriples-1].visibility}
+            <p style="color:darkred; font-size:24px; position: absolute; margin: 10px;">Dosáhli jste limitu řádků!</p>
+        {/if}
         <button id="displayButton" on:click={toggleIframe}><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
     {/if}
 </main>

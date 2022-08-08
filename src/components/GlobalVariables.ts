@@ -21,7 +21,7 @@ export type selectedTripleDetails = {
     "selectedValue":string|number
 }
 
-import {queryEntityProperties, queryVariableInfo} from "./data.js"
+import {queryEntityProperties, queryVariableInfo} from "./data.js";
 
 class GlobalVariables{
 
