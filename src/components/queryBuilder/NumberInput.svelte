@@ -6,7 +6,7 @@
 
     export let tripleDetails:selectedTripleDetails;
 
-    let defaultValue:string|number = tripleDetails.selectedValue;
+    let defaultValue:string = tripleDetails.selectedValue;
     let defaultInterval:string = tripleDetails.selectedNumberInterval;
 
     function handleInputChange(event):void {

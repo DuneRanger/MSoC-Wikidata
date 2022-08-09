@@ -6,7 +6,7 @@
 
 
     let resultsVisibility:boolean = false;
-    function toggleIframe():void {
+    function toggleResults():void {
         resultsVisibility = !resultsVisibility;
     }
     
@@ -96,6 +96,7 @@
         scroll-behavior: auto;
         background-color: #81e62e;
         border-color: #105321;
+        color:black;
         border-radius: 5px;
         border-width: 2px;
         transform: scale(1.3);
@@ -104,12 +105,16 @@
         top: 92vh;
         left: 92vw;
     }
+
+    #displayButton:disabled {
+        background-color: #6ca042;
+        color: black;
+    }
 </style>
 
 <main>
     {#if resultsVisibility}
-        <button id="backButton" on:click={toggleIframe}>🔙</button>
-        <ResultsDisplay triples={triples}></ResultsDisplay>
+        <ResultsDisplay validTriples={[...triples].filter(x => x.selectedProperty)} on:toggleResults={toggleResults}></ResultsDisplay>
     {:else}
         {#each triples as triple}
             {#if triple.visibility}
@@ -119,7 +124,11 @@
         {#if triples[maxTriples-1].visibility}
             <p style="color:darkred; font-size:24px; position: absolute; margin: 10px;">Dosáhli jste limitu řádků!</p>
         {/if}
-        <button id="displayButton" on:click={toggleIframe}><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
+        {#if !triples[0].selectedProperty}
+            <button id="displayButton" on:click={toggleResults} disabled><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
+        {:else}
+            <button id="displayButton" on:click={toggleResults}><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
+        {/if}
     {/if}
 </main>
   

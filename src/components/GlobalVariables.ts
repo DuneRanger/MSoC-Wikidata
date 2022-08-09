@@ -2,10 +2,17 @@ export type entityPropertiesObject = {
     [key:string]: Array<string>
 }
 
+export type queryTriple = {
+    item:string,
+    property:string,
+    value:string,
+    wantedValue:string
+}
+
 export type entityInfoObject = {
     [key:string]: {
         "id":string,
-        "valueType"?:string
+        "valueType"?:"string"|"number"|"date"|"link"|"coordinates"
     }
 };
 
@@ -15,10 +22,10 @@ export type selectedTripleDetails = {
     "items":Array<string>,
     "selectedItem":string,
     "selectedProperty":string,
-    "selectedTimePeriod"?:string|undefined,
-    "selectedTimePrecision"?:string|undefined,
-    "selectedNumberInterval"?:string|undefined,
-    "selectedValue":string|number
+    "selectedTimePeriod"?:"Před"|"Po"|"Přesně",
+    "selectedTimePrecision"?:"Století"|"Rok"|"Měsíc"|"Den",
+    "selectedNumberInterval"?:"Méně než"|"Méně nebo rovno"|"Více než"|"Více nebo rovno"|"Rovno",
+    "selectedValue":string
 }
 
 import {queryEntityProperties, queryVariableInfo} from "./data.js";

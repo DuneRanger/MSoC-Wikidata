@@ -124,7 +124,7 @@ function processFirstEntityQuery(data) {
 
         if (data[x].exampleValueOfPropertyLabel.value.match(/^http/)) valueType = "link";
         else if (data[x].exampleValueOfPropertyLabel.value.match(/^\d+-\d+-\d+/)) valueType = "date";
-        else if (data[x].exampleValueOfPropertyLabel.value.match(/^\d+/)) valueType = "number";
+        else if (data[x].exampleValueOfPropertyLabel.value.match(/^[0-9.,+eE-]+$/)) valueType = "number";
         else valueType = "string" //since the string input box is always the safest option, it is the default valueType to fall back on
 
         queryPropertyVariables.push(upperCaseLabel);
@@ -172,7 +172,7 @@ async function processSecondEntityQuery(data) {
         
                 if (data[x].exampleValueOfPropertyLabel.value.match(/^http/)) valueType = "link";
                 else if (data[x].exampleValueOfPropertyLabel.value.match(/^\d+-\d+-\d+/)) valueType = "date";
-                else if (data[x].exampleValueOfPropertyLabel.value.match(/^\d+/)) valueType = "number";
+                else if (data[x].exampleValueOfPropertyLabel.value.match(/^[0-9.,+eE-]+$/)) valueType = "number";
                 else valueType = "string" //since the string input box is always the safest option, it is the default valueType to fall back on
         
                 queryPropertyVariables.push(upperCaseLabel);
