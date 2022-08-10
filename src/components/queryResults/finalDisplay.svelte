@@ -53,7 +53,6 @@
             case "string":
                 output += `${queryLine.item} wdt:${queryLine.property} ${queryLine.value} .\n\t`
                 if (queryLine.wantedValue != "") output += `${queryLine.value} rdfs:label "${queryLine.wantedValue}"@cs .\n\t`;
-                else output += `${queryLine.value} rdfs:label ${labels[lineIndex+1]} .\n\t`;
                 break;
             case "date":
                 output += `${queryLine.item} wdt:${queryLine.property} ${queryLine.value} .\n\t`;
