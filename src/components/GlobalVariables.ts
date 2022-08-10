@@ -23,7 +23,7 @@ export type selectedTripleDetails = {
     "selectedItem":string,
     "selectedProperty":string,
     "selectedTimePeriod"?:"Před"|"Po"|"Přesně",
-    "selectedTimePrecision"?:"Století"|"Rok"|"Měsíc"|"Den",
+    "selectedTimePrecision"?:"Rok"|"Měsíc"|"Den",
     "selectedNumberInterval"?:"Méně než"|"Méně nebo rovno"|"Více než"|"Více nebo rovno"|"Rovno",
     "selectedValue":string
 }

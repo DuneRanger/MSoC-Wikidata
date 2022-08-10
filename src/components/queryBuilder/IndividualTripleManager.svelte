@@ -8,7 +8,6 @@
     import type {selectedTripleDetails} from "./../GlobalVariables";
     
     export let tripleDetails:selectedTripleDetails;
-    let selectedPropertyIndex:number = -1;
 
     import {createEventDispatcher} from "svelte";
     const dispatch:any = createEventDispatcher();
@@ -26,8 +25,7 @@
 
     function receivePropertyChange(event):void {
         tripleDetails.selectedProperty = event.detail.newValue;
-        selectedPropertyIndex = event.detail.index;
-        if (selectedPropertyIndex == -1) tripleDetails.selectedValue = "";
+        tripleDetails.selectedValue = "";
         tripleDetailsChange();
     }
 

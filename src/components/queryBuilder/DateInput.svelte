@@ -10,7 +10,6 @@
     let defaultPeriod:string = tripleDetails.selectedTimePeriod;
     let defaultPrecision:string = tripleDetails.selectedTimePrecision;
 
-
     function handleInputChange(event):void {
         dispatch("InputChange", {
             inputValue: event.srcElement.value
@@ -42,7 +41,6 @@
 <div>
     S přesností:
     <select on:change={handlePrecisionChange} value={defaultPrecision ? defaultPrecision : "Rok"}>
-        <option value="Století">Století</option>
         <option value="Rok">Rok</option>
         <option value="Měsíc">Měsíc</option>
         <option value="Den">Den</option>

@@ -20,6 +20,9 @@
             "items":[],
             "selectedItem":"",
             "selectedProperty":"",
+            "selectedNumberInterval": "Méně než",
+            "selectedTimePeriod": "Před",
+            "selectedTimePrecision": "Rok",
             "selectedValue":""})
     }
 
@@ -35,7 +38,9 @@
         let possibleItems:Set<string> = new Set();
         for (let x = 0; x < maxTriples-1; x++) {
             if (triples[x].selectedItem) possibleItems.add(triples[x].selectedItem);
-            if (!triples[x].selectedValue && triples[x].selectedProperty) {
+            //Used to get rid of the option to used wanted values as items
+            // if (!triples[x].selectedValue && triples[x].selectedProperty) {
+            if (triples[x].selectedProperty) {
                 if (GlobalVariables.queryEntityProperties.hasOwnProperty(triples[x].selectedProperty)) {
                     possibleItems.add(triples[x].selectedProperty);
                 }
