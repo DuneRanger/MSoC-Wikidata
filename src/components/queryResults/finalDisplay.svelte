@@ -121,7 +121,7 @@ WHERE {
     }
 
     function toggleResults() {
-        dispatch("toggleResults")
+        dispatch("toggleResults");
     }
 </script>
 

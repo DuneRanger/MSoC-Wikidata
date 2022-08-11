@@ -103,14 +103,13 @@ class SPARQLQueryDispatcher {
 
 const queryDispatcher = new SPARQLQueryDispatcher("https://query.wikidata.org/sparql");
 
+// WARNING 
+// This file commits crimes against Sets and does not make proper use of them
+// They arae however, still sued, as to indicate the characteristics of the variables
 
-// let buttonForDetails = document.createElement("button");
-// buttonForDetails.innerHTML = "Click to query for property details";
-// buttonForDetails.onclick = () => {queryForArgument()};
-// document.body.appendChild(buttonForDetails);
 
 function processFirstEntityQuery(data) {
-    let queryPropertyVariables = [];
+    let queryPropertyVariables = new Set();
     let queryVariableInfo = new Set();
     
     for (let x in data) {
@@ -125,20 +124,19 @@ function processFirstEntityQuery(data) {
         if (data[x].exampleValueOfPropertyLabel.value.match(/^http/)) valueType = "link";
         else if (data[x].exampleValueOfPropertyLabel.value.match(/^\d+-\d+-\d+/)) valueType = "date";
         else if (data[x].exampleValueOfPropertyLabel.value.match(/^[0-9.,+eE-]+$/)) valueType = "number";
+        else if (data[x].exampleValueOfPropertyLabel.value.match(/^Point\(/)) valueType = "coordinates";
         else valueType = "string" //since the string input box is always the safest option, it is the default valueType to fall back on
 
-        queryPropertyVariables.push(upperCaseLabel);
-        queryVariableInfo.add({label:upperCaseLabel, id:propertyID, valueType:valueType})
+        queryPropertyVariables.add(upperCaseLabel);
+        queryVariableInfo.add({label:upperCaseLabel, id:propertyID, valueType:valueType});
     }
-    // output = output.slice(0, -2);
     return [queryPropertyVariables, queryVariableInfo];
 }
 
 async function processSecondEntityQuery(data) {
-    let queryPropertyVariables = [""];
+    let queryPropertyVariables = [];
     let queryVariableInfo = new Set();
-    let properties = []
-    
+    let properties = [];
     for (let x in data) {
         if (x > 0 && data[x].propertyAsEntityLabel.value == data[x-1].propertyAsEntityLabel.value) continue; //if this isn't the first example given, skip
         if (data[x].propertyAsEntityLabel.value.match(/^P\d+$/)) continue; //if the property doesn't have a czech label, skip
@@ -149,16 +147,13 @@ async function processSecondEntityQuery(data) {
 
         properties.push([upperCaseLabel, propertyID]);
     }
-    // properties = [properties[0]]
-    for (let y of properties) {
-        // await queryDispatcher.labelQuery(y)
-        // .then(label => {})
-        queryPropertyVariables += '&nbsp;&nbsp;&nbsp;&nbsp;"' + y[0] + '": [';
-        y = y[1];
-        await queryDispatcher.propertyQuery(y)
+    for (let y in properties) {
+        queryPropertyVariables[y] = {label:properties[y][0], variables:[]};
+        // console.log(queryPropertyVariables)
+        await queryDispatcher.propertyQuery(properties[y][1])
         .then(dataJson => dataJson.results.bindings)
         .then(data => {
-            let queryPropertyVariables = [];
+            let queryPropertyVariables = new Set();
             let queryVariableInfo = new Set();
             
             for (let x in data) {
@@ -173,28 +168,25 @@ async function processSecondEntityQuery(data) {
                 if (data[x].exampleValueOfPropertyLabel.value.match(/^http/)) valueType = "link";
                 else if (data[x].exampleValueOfPropertyLabel.value.match(/^\d+-\d+-\d+/)) valueType = "date";
                 else if (data[x].exampleValueOfPropertyLabel.value.match(/^[0-9.,+eE-]+$/)) valueType = "number";
+                else if (data[x].exampleValueOfPropertyLabel.value.match(/^Point\(/)) valueType = "coordinates";
                 else valueType = "string" //since the string input box is always the safest option, it is the default valueType to fall back on
         
-                queryPropertyVariables.push(upperCaseLabel);
+                queryPropertyVariables.add(upperCaseLabel);
                 queryVariableInfo.add({label:upperCaseLabel, id:propertyID, valueType:valueType})
             }
             return [queryPropertyVariables, queryVariableInfo];
         })
         .then(temp => {
-            if (temp[0].length) {
-                for (let x of temp[0]) {
-                    queryPropertyVariables += '"' + x + '",';
-                }
-                queryPropertyVariables = queryPropertyVariables.slice(0, -1);
+             for (let x of temp[0]) {
+                queryPropertyVariables[y].variables.push(x);
             }
             
             for (let x of temp[1]) {
                 queryVariableInfo.add(x);
             }
         });
-        queryPropertyVariables += "],\n";
     }
-
+    console.log(queryPropertyVariables);
     return [queryPropertyVariables, queryVariableInfo];
 }
 
@@ -202,47 +194,70 @@ async function main() {
     document.body.style = "font-size: 24px";
     document.body.innerHTML = "Processing query...";
     const baseIDs = ["Q5", "Q41176", "Q6256"] //Člověk, Bydliště, Státní území
-    let queryPropertyVariables = "export const queryEntityProperties =  {\n"
-    let queryVariableInfo = "export const queryVariableInfo =  {\n"
+    let queryPropertyVariables = "export const queryEntityProperties =  {\n";
+    let queryVariableInfo = "export const queryVariableInfo =  {\n";
+    let AllVariables = [];
     let AllProperties = new Set();
     for (let x of baseIDs) {
         await queryDispatcher.labelQuery(x)
         .then(label => {queryVariableInfo += '&nbsp;&nbsp;&nbsp;&nbsp;"' + label + '": {id:"' + x + '"},\n'})
     }
     document.body.innerHTML = "Processing base entities...";
-    for (let x of baseIDs) {
-        await queryDispatcher.labelQuery(x)
-        .then(label => {queryPropertyVariables += '&nbsp;&nbsp;&nbsp;&nbsp;"' + label + '": '})
-        
-        await queryDispatcher.baseQuery(x)
+    for (let i in baseIDs) {
+        let tempLabel = "";
+        await queryDispatcher.labelQuery(baseIDs[i])
+        .then(label => {tempLabel = label});
+        AllVariables.push({label: tempLabel, variables: []})
+
+        await queryDispatcher.baseQuery(baseIDs[i])
         .then(dataJson => dataJson.results.bindings)
         .then(data => {
             let temp = processFirstEntityQuery(data);
-            queryPropertyVariables += "[";
             for (let x of temp[0]) {
-                queryPropertyVariables += '"' + x + '",';
+                let z = true;
+                for (let y of AllVariables[i].variables) {
+                    if (y == x){
+                        z = false;
+                        break;
+                    }
+                }
+                if (z) AllVariables[i].variables.push(x);
             }
-            queryPropertyVariables = queryPropertyVariables.slice(0, -1);
-            queryPropertyVariables += "],\n";
-
-            for (let x of temp[1]) {
-                AllProperties.add(x);
-            }
-        })
-    }
-    document.body.innerHTML = "Processing properties...";
-    for (let x of baseIDs) {
-        await queryDispatcher.baseQuery(x)
-        .then(dataJson => dataJson.results.bindings)
-        .then(data => processSecondEntityQuery(data))
-        .then(temp => {
-            queryPropertyVariables += temp[0]
 
             for (let x of temp[1]) {
                 let z = true;
                 for (let y of AllProperties) {
                     if (y.label == x.label){
-                        console.log()
+                        z = false;
+                        break;
+                    }
+                }
+                if (z) AllProperties.add(x);
+            }
+        })
+    }
+    document.body.innerHTML = "Processing properties...";
+    for (let i in baseIDs) {
+        console.log(i)
+        await queryDispatcher.baseQuery(baseIDs[i])
+        .then(dataJson => dataJson.results.bindings)
+        .then(data => processSecondEntityQuery(data))
+        .then(temp => {
+            for (let x of temp[0]) {
+                let z = true;
+                for (let y of AllVariables) {
+                    if (y.label == x.label){
+                        z = false;
+                        break;
+                    }
+                }
+                if (z) AllVariables.push(x);
+            }
+
+            for (let x of temp[1]) {
+                let z = true;
+                for (let y of AllProperties) {
+                    if (y.label == x.label){
                         z = false;
                         break;
                     }
@@ -251,10 +266,13 @@ async function main() {
             }
         });
     }
-
     for (let x of AllProperties) {
-        queryVariableInfo += '&nbsp;&nbsp;&nbsp;&nbsp;"' + x.label + '": {id:"' + x.id + '", valueType:"' + x.valueType + '"},\n'
+        queryVariableInfo += '&nbsp;&nbsp;&nbsp;&nbsp;"' + x.label + '": {id:"' + x.id + '", valueType:"' + x.valueType + '"},\n';
     }
+    for (let x of AllVariables) {
+        queryPropertyVariables += `&nbsp;&nbsp;&nbsp;&nbsp;"${x.label}": [${x.variables.map(x => `"${x}"`).join(", ")}],\n`
+    }
+    // console.log(AllVariables)
     // console.log([...AllProperties][0])
 
     queryVariableInfo = queryVariableInfo.slice(0, -2) + "\n}";
