@@ -34,7 +34,7 @@ class GlobalVariables{
 
     constructor(){}
     static get queryItemVariables():Array<string> {
-        return Object.keys(queryVariableInfo).filter(x => queryVariableInfo[x].id[0] == "Q");
+        return Object.keys(queryVariableInfo).filter(x => queryVariableInfo[x].id.slice(0, 4) == "wd:Q");
     }
 
     static queryEntityProperties:entityPropertiesObject = queryEntityProperties;

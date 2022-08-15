@@ -12,7 +12,7 @@
     
 
     let triples:Array<selectedTripleDetails> = [];
-    const maxTriples:number = 9;
+    const maxTriples:number = 8;
     for (let x = 0; x < maxTriples; x++) {
         triples.push({
             "tripleID":x,
