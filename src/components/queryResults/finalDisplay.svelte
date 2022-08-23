@@ -3,22 +3,14 @@
     import GlobalVariables from "./../GlobalVariables";
     import OptionsScreen from "./OptionsScreen.svelte";
     import {createEventDispatcher} from "svelte";
-    import {SPARQLQueryDispatcher} from "./../SPARQLQueryDispatcher";
     const dispatch:any = createEventDispatcher();
-    const queryDispatcher = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
 
 
     export let validTriples:Array<selectedTripleDetails>;
-    let coordinateTriples:Array<selectedTripleDetails> = [];
-    for (let x = 0; x < validTriples.length; x++) {
-        if (GlobalVariables.queryEntityInfo[validTriples[x].selectedProperty].valueType == "coordinates") {
-            coordinateTriples.push(...validTriples.splice(x, 1))
-        }
-    }
-    console.log(coordinateTriples);
+
 
     let nameLine:queryTriple;
-    //A check for a custom property
+    //A check for a custom property (currently only "Jméno")
     for (let x = validTriples.length-1; x > -1 ; x--) {
         if (validTriples[x].selectedProperty == "Jméno") {
             nameLine = {item:"?0", property:GlobalVariables.queryEntityInfo[validTriples[x].selectedProperty].id, value:"", wantedValue:validTriples[x].selectedValue}
@@ -26,25 +18,20 @@
         }
     }
 
-    let queryLines:Array<queryTriple> = [];
-    let uniqueVariables:Set<string> = new Set();
-    let labels:Array<string> = [];
-    let mainQuery:string;
-    let encodedMainQueryLink:string;
-    let coordinatesQuery:string;
-    let encodedCoordinatesQueryLink:string;
-    const iframeURL:string = 'https://query.wikidata.org/embed.html#';
     let queryValidity:boolean = (validTriples.length != 0);
-    console.log(queryValidity, validTriples)
 
-    
-    $: encodedCoordinatesQueryLink = iframeURL + encodeURIComponent(coordinatesQuery);
+
+    let mainQuery:string;
+    const iframeURL:string = 'https://query.wikidata.org/embed.html#';
+
     $: encodedMainQueryLink = iframeURL + encodeURIComponent(mainQuery);
+
 
     if (!queryValidity) {
         toggleResults();
     } else {
-
+        let queryLines:Array<queryTriple> = [];
+        
         for (let x = 0; x < validTriples.length; x++) {
             let item:string = "";
             for (let y = 0; y < x; y++) {
@@ -68,12 +55,15 @@
             queryLines.push({item:item, property:GlobalVariables.queryEntityInfo[validTriples[x].selectedProperty].id, value:value, wantedValue:validTriples[x].selectedValue});
         }
 
+        let uniqueVariables:Set<string> = new Set();
+
         for (let x of queryLines) {
             uniqueVariables.add(x.item);
             if (x.value[0] == "?") uniqueVariables.add(x.value);
         }
 
-        
+        let labels:Array<string> = [];
+            
         labels.push("?" + validTriples[0].selectedItem);
 
         for (let x of validTriples) {
@@ -84,7 +74,7 @@
             let output:string = "";
             switch (GlobalVariables.queryEntityInfo[validTriples[lineIndex].selectedProperty].valueType) {
                 case "string":
-                    output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`
+                    output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
                     if (queryLine.wantedValue != "") output += `${queryLine.value} rdfs:label "${queryLine.wantedValue}"@cs .\n\t`;
                     break;
                 case "date":
@@ -121,8 +111,12 @@
                         output+=`FILTER(${queryLine.value} ${intervalSymbol} ${queryLine.wantedValue})\n\t`;
                     }
                     break;
+                case "link":
+                case "image":
+                case "coordinates":
+                    output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
+                    break;
             }
-            console.log(output)
             return output;
         }
 
@@ -131,6 +125,7 @@
         mainQuery = `SELECT ${labels.join(" ")}
 WHERE {
     ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
+    ${nameLine?.item ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
     ${queryLines.map(formatTripleAndFilter).join("")}
         
     SERVICE wikibase:label { 
@@ -139,45 +134,10 @@ WHERE {
     }
     FILTER(LANG(${labels[0]}) = "cs")
     ${validTriples.map((x, i) => GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "string"  ? `FILTER(LANG(${labels[i+1]}) = "cs")\n\t`: "").join("")}
-    ${validTriples.map((x, i) => GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "date" ? `BIND(${[...uniqueVariables][i+1]} AS ${labels[i+1]})\n\t`: "").join("")}
+    ${validTriples.map((x, i) => {let shortener = GlobalVariables.queryEntityInfo[x.selectedProperty].valueType; return (shortener == "date" || shortener == "image" || shortener == "coordinates") ? `BIND(${[...uniqueVariables][i+1]} AS ${labels[i+1]})\n\t`: ""}).join("")}
 } LIMIT 100`; //Dočasný limit pro testy
 
         console.log(mainQuery);
-        
-        let coordinateLines:Array<queryTriple> = [];
-        for (let x = 0; x < coordinateTriples.length; x++) {
-            let item:string = "";
-            for (let y = 0; y < validTriples.length; y++) {
-                console.log(coordinateTriples[x].selectedItem, validTriples[y].selectedItem)
-                if (coordinateTriples[x].selectedItem == validTriples[y].selectedItem) {
-                    item = queryLines[y].item;
-                    break;
-                }
-                if (coordinateTriples[x].selectedItem == validTriples[y].selectedProperty) {
-                    item = queryLines[y].value;
-                    break;
-                }
-            }
-            if (!item) continue; //Something weird and impossible must have happened in this case
-            let value:string = `?10${x}`;
-            coordinateLines.push({item:item, property:GlobalVariables.queryEntityInfo[coordinateTriples[x].selectedProperty].id, value:value, wantedValue:""});
-        }
-        console.log(coordinateLines);
-
-        queryDispatcher.query(mainQuery, "redundant").then(queryJSON => {
-            let temp:Array<string> = queryJSON.data.results.bindings.map(x => x["Bydliště··˃Člověk"].value);
-            coordinatesQuery = `#defaultView:Map
-SELECT ${coordinateLines.map(x => x.value).join(" ")}
-WHERE {
-    VALUES ?possibleLabels {${temp.filter((x, i) => temp.indexOf(x) == i).map(x => `"${x}"@cs`).join(" ")}}
-    ${coordinateLines.map(x => `${x.item} rdfs:label ?possibleLabels .\n\t${x.item} ${x.property} ${x.value} .`)}   
-} GROUP BY ${coordinateLines.map(x => x.value).join(" ")} LIMIT 100`; //Dočasný limit pro testy
-// ${[...uniqueVariables][0]} rdfs:label ?possibleLabels .
-// ${queryLines.map(formatTripleAndFilter).join("")}
-
-            console.log(coordinatesQuery)
-        });
-
     }
 
     let iframeVisibilty:boolean = false;
@@ -198,26 +158,14 @@ WHERE {
         top: 30%;
         transform: translate(-50%, -30%);
     }
-    .wikidataIframeDuo {
-        position: relative;
-    }
 </style>
 
 
 <div>
     {#if iframeVisibilty}
         <button id="backButton" on:click={toggleIframe}>🔙</button>
-        <div style="width:99vw; height:93vh; translate:1%">
-            {#if coordinateTriples.length == 0}
-                <iframe class="wikidataIframeSolo" style="width: 90vw; height: 90vh; border: none;" title="wikidata" src={encodedMainQueryLink} referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups">
-                </iframe>
-            {:else}
-                <iframe class="wikidataIframeDuo" style="width: 56vw; height: 90vh; border: none;" title="wikidata" src={encodedMainQueryLink} referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups">
-                </iframe>
-                <iframe class="wikidataIframeDuo" style="width: 42vw; height: 90vh; border: none;" title="wikidata" src={encodedCoordinatesQueryLink} referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups">
-                </iframe>
-            {/if}
-        </div>
+        <iframe class="wikidataIframeSolo" style="width: 90vw; height: 94vh; border: none;" title="wikidata" src={encodedMainQueryLink} referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups">
+        </iframe>
     {:else}
         <button id="backButton" on:click={toggleResults}>🔙</button>
         <OptionsScreen on:toggleIframe={toggleIframe} validity={queryValidity}></OptionsScreen>

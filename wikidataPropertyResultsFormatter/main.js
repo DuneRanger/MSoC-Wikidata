@@ -105,7 +105,7 @@ const queryDispatcher = new SPARQLQueryDispatcher("https://query.wikidata.org/sp
 
 // WARNING 
 // This file commits crimes against Sets and does not make proper use of them
-// They arae however, still sued, as to indicate the characteristics of the variables
+// They ara, however, still used, as to indicate the characteristics of the variables
 
 
 function processFirstEntityQuery(data) {
@@ -121,7 +121,8 @@ function processFirstEntityQuery(data) {
         let upperCaseLabel = data[x].propertyAsEntityLabel.value[0].toUpperCase() + data[x].propertyAsEntityLabel.value.substr(1);
         let propertyID = data[x].propertyAsEntity.value.match(/P\d+/)[0];
 
-        if (data[x].exampleValueOfPropertyLabel.value.match(/^http/)) valueType = "link";
+        if (data[x].exampleValueOfPropertyLabel.value.match(/png|jpg|svg|webm|gif|ogv|pdf$/i)) valueType = "image";
+        else if (data[x].exampleValueOfPropertyLabel.value.match(/^http/)) valueType = "link";
         else if (data[x].exampleValueOfPropertyLabel.value.match(/^\d+-\d+-\d+/)) valueType = "date";
         else if (data[x].exampleValueOfPropertyLabel.value.match(/^[0-9.,+eE-]+$/)) valueType = "number";
         else if (data[x].exampleValueOfPropertyLabel.value.match(/^Point\(/)) valueType = "coordinates";

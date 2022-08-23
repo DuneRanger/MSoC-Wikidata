@@ -3,7 +3,6 @@
     import NumberInput from "./NumberInput.svelte";
     import DateInput from "./DateInput.svelte";
     import SearchInput from "./SearchInput.svelte";
-    // import StringInput from "./StringInput.svelte";
     import GlobalVariables from "./../GlobalVariables";
     import type {selectedTripleDetails, entityInfoObject} from "./../GlobalVariables";
     
@@ -50,7 +49,7 @@
     }
 
     let itemsProperties:Array<string>|undefined;
-    let TypeOfPropertyValue:"string"|"number"|"date"|"link"|"coordinates"|undefined;
+    let TypeOfPropertyValue:"string"|"number"|"date"|"link"|"coordinates"|"image"|undefined;
 
     $: itemsProperties = tripleDetails.selectedItem ? GlobalVariables.queryEntityProperties[tripleDetails.selectedItem] : undefined;
     $: TypeOfPropertyValue = tripleDetails.selectedProperty ? GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].valueType : undefined;
@@ -81,7 +80,7 @@
             <DateInput tripleDetails={tripleDetails} on:PeriodChange={receiveTimePeriodChange} on:InputChange={receiveValueChange} on:PrecisionChange={receiveTimePrecisionChange}></DateInput>
         {:else if TypeOfPropertyValue == "number"}
             <NumberInput tripleDetails={tripleDetails} on:IntervalChange={receiveNumberIntervalChange} on:InputChange={receiveValueChange}></NumberInput>
-        {:else if TypeOfPropertyValue == "link"}
+        {:else if TypeOfPropertyValue == "link" || TypeOfPropertyValue == "image"}
             <input disabled placeholder="Výsledek bude ve formě odkazu" style="width:250px">
         {:else if TypeOfPropertyValue == "coordinates"}
             <input disabled placeholder="Poloha souřadnic se objeví na mapě" style="width:270px">

@@ -30,7 +30,7 @@
             {
                 select distinct ?value 
                 where {
-                ?subject wdt:${propertyID} ?value.
+                ?subject ${propertyID} ?value.
                 
                 }group by ?value limit 100
             } 
@@ -39,14 +39,13 @@
                 ?value rdfs:label ?valueLabel
             }
             filter (lang(?valueLabel) = "cs")
-            #   filter (contains(?valueLabel, "Král"@cs))
             }`;
         let bigSparqlQuery:string = `select distinct ?value ?valueLabel
             where {
             {
                 select distinct ?value 
                 where {
-                ?subject wdt:${propertyID} ?value.
+                ?subject ${propertyID} ?value.
                 
                 }group by ?value limit 2500
             } 

@@ -5,7 +5,7 @@ export class SPARQLQueryDispatcher {
     }
 
     async query(sparqlQuery, entityID):Promise<{propertyID:string,data:any}> {
-        const fullUrl:string = this.endpoint + '?query=' + encodeURIComponent( sparqlQuery );
+        const fullUrl:string = this.endpoint + '?query=' + encodeURIComponent(sparqlQuery);
         const headers = { 'Accept': 'application/sparql-results+json' };
 
         let output:{

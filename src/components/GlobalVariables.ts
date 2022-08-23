@@ -12,7 +12,7 @@ export type queryTriple = {
 export type entityInfoObject = {
     [key:string]: {
         "id":string,
-        "valueType"?:"string"|"number"|"date"|"link"|"coordinates"
+        "valueType"?:"string"|"number"|"date"|"link"|"coordinates"|"image"
     }
 };
 
