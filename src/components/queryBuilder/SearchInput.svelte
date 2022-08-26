@@ -59,11 +59,12 @@
             if (queryJson.propertyID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
                 examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
             }
-            console.log("small query for: " + tripleDetails.selectedProperty + " (" + propertyID + ")");
+            console.log("Small query for: " + tripleDetails.selectedProperty + " (" + propertyID + ") was loaded");
         })
         .catch(err => {
             examples = [];
-            console.log(err, tripleDetails);
+            console.log("Error for small query for: " + tripleDetails.selectedProperty + " (" + propertyID + "):\n" + err 
+            + "\nTripleDetails for debugging:", tripleDetails);
         });
         let bigOutput:Promise<{propertyID:string,data:any}> = queryDispatcher.query(bigSparqlQuery, propertyID);
         
@@ -73,11 +74,12 @@
             if (queryJson.propertyID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
                 examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
             }
-            console.log("big query for " + tripleDetails.selectedProperty + " (" + propertyID + ")");
+            console.log("Big query for " + tripleDetails.selectedProperty + " (" + propertyID + ") was loaded");
         })
         .catch(err => {
             examples = [];
-            console.log(err, tripleDetails);
+            console.log("Error for big query for: " + tripleDetails.selectedProperty + " (" + propertyID + "):\n" + err 
+            + "\nTripleDetails for debugging:", tripleDetails);
         });
         renewOnclickEvents();
         LoadingExamples = false;
@@ -131,10 +133,8 @@
             let text:string = inputBox.value.toUpperCase();
             for (let option of exampleValues.options) {
                 if(option.value.toUpperCase().indexOf(text) > -1){
-                    container.style.zIndex = (100-tripleDetails.tripleID).toString();
                     option.style.display = "block";
                 }else{
-                    container.style.zIndex = "0";
                     option.style.display = "none";
                 }
             };
@@ -232,7 +232,7 @@
             {/if}
         {:else}
             <!-- examples will always exist at this point-->
-            {#if examples.length == 0}
+            {#if examples?.length == 0}
                 <option value="" disabled>Nastala chyba při hledání možností</option>
                 <option value="" disabled>Stále můžete zadat hodnoty, které hledáte</option>
             {:else}
@@ -243,5 +243,5 @@
         {/if}
     </datalist>
 
-    <InfoSign text="Můžete zadat vlastní hodnoty, ale není zaručeno, že je v databázi pod stejným názvem!"></InfoSign>
+    <InfoSign text="Můžete zadat vlastní hodnoty, ale není zaručeno, že je v databázi pod stejným názvem"></InfoSign>
 </div>

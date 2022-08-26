@@ -27,6 +27,7 @@
             "selectedTimePeriod": "Před",
             "selectedTimePrecision": "Rok",
             "selectedValue":""})
+        // Default values are pushed for all possibilities to simplify default selectors for each input box 
     }
 
     triples[0].items = GlobalVariables.queryItemVariables;
@@ -99,20 +100,12 @@
     //done just for collapsability
     import type {queryTriple} from "./components/GlobalVariables"
     import {SPARQLQueryDispatcher} from "./components/SPARQLQueryDispatcher";
-    $: console.log(ActivatorForResultCount)
-    $:ActivatorForResultCount, resultsCounter();
+    $: ActivatorForResultCount, resultsCounter();
     function resultsCounter() {
         const queryDispatcher = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
 
 
         let validTriples:Array<selectedTripleDetails> = [...triples].filter(x => x.selectedProperty);
-        let coordinateTriples:Array<selectedTripleDetails> = [];
-        for (let x = 0; x < validTriples.length; x++) {
-            if (GlobalVariables.queryEntityInfo[validTriples[x].selectedProperty].valueType == "coordinates") {
-                coordinateTriples.push(...validTriples.splice(x, 1))
-            }
-        }
-        console.log(coordinateTriples);
 
         let nameLine:queryTriple;
         //A check for a custom property
@@ -125,12 +118,10 @@
 
         let queryLines:Array<queryTriple> = [];
         let uniqueVariables:Set<string> = new Set();
-        let labels:Array<string> = [];
-        let mainQuery:string;
+        let resultCountQuery:string;
         let queryValidity:boolean = (validTriples.length != 0);
 
         if (queryValidity) {
-            console.log("here")
             for (let x = 0; x < validTriples.length; x++) {
                 let item:string = "";
                 for (let y = 0; y < x; y++) {
@@ -159,18 +150,11 @@
                 if (x.value[0] == "?") uniqueVariables.add(x.value);
             }
 
-            
-            labels.push("?" + validTriples[0].selectedItem);
-
-            for (let x of validTriples) {
-                labels.push(("?" + x.selectedProperty + `··˃${x.selectedItem}`).replaceAll(" ", "_"));
-            }
-
             function formatTripleAndFilter(queryLine:queryTriple, lineIndex:number):string {
                 let output:string = "";
                 switch (GlobalVariables.queryEntityInfo[validTriples[lineIndex].selectedProperty].valueType) {
                     case "string":
-                        output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`
+                        output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
                         if (queryLine.wantedValue != "") output += `${queryLine.value} rdfs:label "${queryLine.wantedValue}"@cs .\n\t`;
                         break;
                     case "date":
@@ -207,26 +191,32 @@
                             output+=`FILTER(${queryLine.value} ${intervalSymbol} ${queryLine.wantedValue})\n\t`;
                         }
                         break;
+                    case "link":
+                    case "image":
+                    case "coordinates":
+                        output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
+                        break;
                 }
-                console.log(output)
                 return output;
             }
 
-            console.log(validTriples)
 
-            mainQuery = `SELECT (COUNT(?0) AS ?resultsNum)
-    WHERE {
-        ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
-        ${nameLine?.wantedValue ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
-        ${queryLines.map(formatTripleAndFilter).join("")}
-    }`;
+            resultCountQuery = `SELECT (COUNT(*) AS ?resultsNum)
+WHERE {
+    ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
+    ${nameLine?.wantedValue ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
+    ${queryLines.map(formatTripleAndFilter).join("")}
+}`;
+
             queryResults = "...";
-            console.log(mainQuery)
-            queryDispatcher.query(mainQuery, "redundant").then(queryJSON => {
+            console.log("Query for estimated result count\n" + resultCountQuery);
+
+            queryDispatcher.query(resultCountQuery, "redundant").then(queryJSON => {
                 queryResults = queryJSON.data.results.bindings[0]["resultsNum"].value;
             }).catch(err => {
-                queryResults = err;
-            })
+                console.log("Error for estimated result count\n" + err);
+                queryResults = "Nastala chyba při načtení";
+            });
         }
     }
 </script>
@@ -270,7 +260,7 @@
         {#if triples[maxTriples-1].visibility}
             <p style="color:darkred; font-size:24px; position: absolute; margin: 10px;">Dosáhli jste limitu řádků!</p>
         {/if}
-        <p style="margin-left: 8px">Počet výsledků teď: {queryResults}</p>
+        <p style="margin-left: 8px">Přibližný počet výsledků: {queryResults}</p>
         {#if !triples[0].selectedProperty}
             <button id="displayButton" on:click={toggleResults} disabled><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
         {:else}

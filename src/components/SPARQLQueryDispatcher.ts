@@ -13,7 +13,7 @@ export class SPARQLQueryDispatcher {
             data:any
         } = {
             propertyID: entityID,
-            data: await fetch(fullUrl, {headers}).then(body => body.json()).catch(err => {throw err})
+            data: await fetch(fullUrl, {headers}).then(body => body.json()).catch(err => {console.log("sdtst", err); throw err})
         }
         return output;
     }
