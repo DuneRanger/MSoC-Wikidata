@@ -1,5 +1,6 @@
 <script lang="ts">
     import {createEventDispatcher} from "svelte";
+    import InfoSign from "./InfoSign.svelte";
     const dispatch:any = createEventDispatcher();
 
     export let validity:boolean;
@@ -7,6 +8,7 @@
     export let queryResultsCount:string|number;
 
     export let languageOption:boolean;
+    export let thoroughFilterOption:boolean;
 
     export let viewImageOption:boolean;
     export let viewMapOption:boolean;
@@ -19,8 +21,15 @@
     function toggleIframe() {
         dispatch("toggleIframe");
     }
+
     function toggleLanguageOption(event) {
         dispatch("toggleLanguageOption", {
+            parity: event.srcElement.checked
+        });
+    }
+
+    function toggleFilterOption(event) {
+        dispatch("toggleFilterOption", {
             parity: event.srcElement.checked
         });
     }
@@ -77,6 +86,10 @@
         padding:3px;
     }
 
+    .bracketsText {
+        font-size: 12px; 
+    }
+
     label[for=displayVariables] {
         font-size: 18px;
         font-weight: 500;
@@ -98,30 +111,36 @@
         Počet výsledků bez filterů: {queryResultsCount}
     </p>
 
-    <span style="font-size:14px; margin-top:30px;">Doporučeno v případě že načítaní trvá moc dlouho</span>
-    <br>
+    <!-- <span style="font-size:14px; margin-top:30px;">Doporučeno v případě že načítaní trvá moc dlouho</span>
+    <br> -->
+    
     Limit na počet výsledků: <input type="number" value={resultsLimit} on:change={changeResultsLimit} style="width: 100px">
+    <InfoSign text="Doporučeno v případě že načítaní trvá moc dlouho"></InfoSign>
     <br>
 
     <div class="displayOptions">
         <ul>
             <li>
                 <input type="checkbox" id="languageOption" on:change={toggleLanguageOption} checked={languageOption}>
-                <label for="languageOption">Hledat i v ostatních jazycích (angličtina, němčina, ...)</label>
+                <label for="languageOption">Hledat výsledky i v ostatních jazycích <InfoSign text="Angličtina, němčina, španělština, ..."></InfoSign></label>
+            </li>
+            <li>
+                <input type="checkbox" id="thoroughFilterOption" on:change={toggleFilterOption} checked={thoroughFilterOption}>
+                <label for="thoroughFilterOption">Důkladnější hledání zadaných hodnot <InfoSign text="Pomalejší, ale vhodné když jste zadali jen část jména nebo názvu"></InfoSign></label>
             </li>
             <li>
                 <input type="checkbox" id="wikiArticleOption" on:change={toggleWikiArticleOption} checked={displayWikiArticle}>
-                <label for="wikiArticleOption">Hledat výsledky se stránkou ve Wikipédii</label>
+                <label for="wikiArticleOption">Najít výsledky se stránkou ve Wikipédii</label>
             </li>
             {#if viewMapOption}
                 <li>
                     <input type="checkbox" id="viewMapOption" on:change={toggleMapView} checked={viewMapOption}>
-                    <label for="viewMapOption">Zobrazit hned jako mapu (Zobrazení lze zmenit v levé části mapy)</label>
+                    <label for="viewMapOption">Zobrazit hned jako mapu <InfoSign text="Zobrazení lze zmenit v levé části mapy"></InfoSign></label>
                 </li>
             {:else if viewImageOption}
                 <li>
                     <input type="checkbox" id="viewImageOption" on:change={toggleImageView} checked={viewImageOption}>
-                    <label for="viewImageOption">Zobrazit obrázky hned (Zobrazení lze zmenit v levé části mapy)</label>
+                    <label for="viewImageOption">Zobrazit hned s obrázky <InfoSign text="Zobrazení lze zmenit v levé části tabulky"></InfoSign></label>
                 </li>
             {/if}
         </ul>

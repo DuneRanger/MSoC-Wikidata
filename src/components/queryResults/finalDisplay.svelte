@@ -28,6 +28,7 @@
 
     let labelLanguages:string = "cs";
     let displayWikiArticle:boolean = false;
+    let thoroughFilterOption: boolean = false;
 
 
     let nameLine:queryTriple;
@@ -59,7 +60,7 @@
                 switch (GlobalVariables.queryEntityInfo[validTriples[lineIndex].selectedProperty].valueType) {
                     case "string":
                         output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
-                        if (queryLine.wantedValue != "") output += `${queryLine.value} rdfs:label "${queryLine.wantedValue}"@cs .\n\t`;
+                        if (queryLine.wantedValue != "" && !thoroughFilterOption) output += `${queryLine.value} rdfs:label "${queryLine.wantedValue}"@cs .\n\t`;
                         break;
                     case "date":
                         output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
@@ -109,16 +110,16 @@
 WHERE {
     ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
     ${displayWikiArticle ? "?Stránka schema:about ?0. ?Stránka schema:isPartOf <https://en.wikipedia.org/>." : ""}
-    ${nameLine?.wantedValue ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
+    ${nameLine?.wantedValue && !thoroughFilterOption ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
     ${queryLines.map(formatTripleAndFilter).join("")}
         
     SERVICE wikibase:label { 
         bd:serviceParam wikibase:language "${labelLanguages}" .
         ${[...uniqueVariables].map((x, i) => `${x} rdfs:label ${labels[i]} .`).join("\n\t\t")}
     }
-    FILTER(LANG(${labels[0]}) = "cs")
+    ${labelLanguages == "cs" ? `FILTER(LANG(${labels[0]}) = "cs")` : ""}
     ${validTriples.map((x, i) => GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "string" 
-    ? labelLanguages.length < 5 ? `FILTER(LANG(${labels[i+1]}) = "cs")\n\t` : ""
+    ? (labelLanguages == "cs" ? `FILTER(LANG(${labels[i+1]}) = "cs")\n\t` : "") + (thoroughFilterOption && x.selectedValue ? `FILTER(CONTAINS(${labels[i+1]}, "${x.selectedValue}"))\n\t` : "")
     : `BIND(${[...uniqueVariables][i+1]} AS ${labels[i+1]})\n\t`).join("")}
 }
 LIMIT ${resultsLimit}
@@ -209,6 +210,11 @@ WHERE {
         updateMainQuery();
     }
 
+    function toggleFilterOption(event) {
+        thoroughFilterOption = event.detail.parity;
+        updateMainQuery();
+    }
+
     function toggleWikiArticleOption(event) {
         displayWikiArticle = event.detail.parity;
         updateMainQuery();
@@ -217,14 +223,14 @@ WHERE {
     function toggleImageView(event) {
         if (event.detail.parity) {
             defaultViewOption = "#defaultView:ImageGrid";
-        } else defaultViewOption = "";
+        } else defaultViewOption = "#";
         updateMainQuery();
     }
 
     function toggleMapView(event) {
         if (event.detail.parity) {
             defaultViewOption = "#defaultView:Map";
-        } else defaultViewOption = "";
+        } else defaultViewOption = "#";
         updateMainQuery();
     }
     
@@ -255,9 +261,11 @@ WHERE {
         </iframe>
     {:else}
         <button id="backButton" on:click={toggleResults}>🔙</button>
-        <OptionsScreen on:toggleIframe={toggleIframe} on:updateResultsLimit={updateResultsLimit} on:toggleVariableDisplay={toggleVariableDisplay}
-        on:toggleWikiArticleOption={toggleWikiArticleOption} on:toggleLanguageOption={toggleLanguageOption} on:toggleImageView={toggleImageView} on:toggleMapView={toggleMapView}
-        validity={queryValidity} {queryResultsCount} {resultsLimit} languageOption={labelLanguages.length>4} {viewMapOption} {viewImageOption} {labels} {labelsDisplayParity} {displayWikiArticle}></OptionsScreen>
+        <OptionsScreen on:toggleIframe={toggleIframe} on:updateResultsLimit={updateResultsLimit} on:toggleLanguageOption={toggleLanguageOption}
+        on:toggleFilterOption={toggleFilterOption} on:toggleImageView={toggleImageView} on:toggleMapView={toggleMapView} 
+        on:toggleVariableDisplay={toggleVariableDisplay} on:toggleWikiArticleOption={toggleWikiArticleOption} 
+        validity={queryValidity} {queryResultsCount} {resultsLimit} languageOption={labelLanguages != "cs"} {thoroughFilterOption}
+        {viewMapOption} {viewImageOption} {labels} {labelsDisplayParity} {displayWikiArticle}></OptionsScreen>
         {#if !queryValidity}
             <p style="color:#663333; font-size:20px; text-align:center;">Vyplňtě prosím alespoň jednu vlastnot které není: Jméno</p>
         {/if}
