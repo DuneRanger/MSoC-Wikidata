@@ -97,10 +97,12 @@
         
     }
 
-    //done just for collapsability
     import type {queryTriple} from "./components/GlobalVariables"
     import {SPARQLQueryDispatcher} from "./components/SPARQLQueryDispatcher";
-    $: ActivatorForResultCount, resultsCounter();
+import InfoSign from "./components/queryBuilder/InfoSign.svelte";
+    let lastResultQueryID:number = +new Date(); //Ensures that the last query sent will be the one displayed
+    let lastResultQuery:string; //Ensures that the same query isn't being sent every 5 seconds
+    setInterval(resultsCounter, 5000)
     function resultsCounter() {
         const queryDispatcher = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
 
@@ -208,15 +210,29 @@ WHERE {
     ${queryLines.map(formatTripleAndFilter).join("")}
 }`;
 
-            queryResults = "...";
-            console.log("Query for estimated result count\n" + resultCountQuery);
+            
+            let now = +new Date();
+            if (resultCountQuery != lastResultQuery) {
+                lastResultQueryID = now;
+                lastResultQuery = resultCountQuery;
+                
+                queryResults = "...";
+                console.log("Query for estimated result count: " + lastResultQueryID + "\n" + resultCountQuery);
 
-            queryDispatcher.query(resultCountQuery, "redundant").then(queryJSON => {
-                queryResults = queryJSON.data.results.bindings[0]["resultsNum"].value;
-            }).catch(err => {
-                console.log("Error for estimated result count\n" + err);
-                queryResults = "Nastala chyba při načtení";
-            });
+                queryDispatcher.query(resultCountQuery, now).then(queryJSON => {
+                    // console.log ("\n\n\n=================\n\n\n", queryJSON.queryID, "\n", lastResultQuery.toString(), "\n\n", queryJSON.data.results.bindings[0]["resultsNum"].value)
+                    if (queryJSON.data == "Timeout") {
+                        queryResults = "Přílíš moc aby se rychle našli"; // Buď žádný nebo velmi mnoho
+                    } else if (typeof queryJSON.data == "string") {
+                        throw queryJSON.data
+                    } else if (queryJSON.queryID == lastResultQueryID.toString()) {
+                        queryResults = queryJSON.data.results.bindings[0]["resultsNum"].value;
+                    }
+                }).catch(err => {
+                    console.log("Error for estimated result count\n" + err);
+                    queryResults = "Nastala zvláštní chyba při načtení";
+                });
+            }
         }
     }
 </script>
@@ -257,10 +273,11 @@ WHERE {
                 <RDFSTripleSet tripleDetails={triple} on:tripleDetailsChange={handleTripleDetailsChange}></RDFSTripleSet>
             {/if}
         {/each}
-        {#if triples[maxTriples-1].visibility}
-            <p style="color:darkred; font-size:24px; position: absolute; margin: 10px;">Dosáhli jste limitu řádků!</p>
-        {/if}
         <p style="margin-left: 8px">Přibližný počet výsledků: {queryResults}</p>
+        {#if triples[maxTriples-1].visibility}
+            <p style="color:darkred; font-size:24px; margin: 8px 10px 0 10px">Dosáhli jste limitu řádků!</p>
+            <p style="padding-left: 8px; margin: 0">(Pravděpodobně by se nenašly žádné výsledky)</p>
+        {/if}
         {#if !triples[0].selectedProperty}
             <button id="displayButton" on:click={toggleResults} disabled><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
         {:else}

@@ -55,8 +55,8 @@
             }
             filter (lang(?valueLabel) = "cs")
             }`;
-        let smallOutput:Promise<{propertyID:string,data:any}> = queryDispatcher.query(sparqlQuery, propertyID).then(queryJson => {
-            if (queryJson.propertyID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
+        let smallOutput:Promise<{queryID:string,data:any}> = queryDispatcher.query(sparqlQuery, propertyID).then(queryJson => {
+            if (queryJson.queryID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
                 examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
             }
             console.log("Small query for: " + tripleDetails.selectedProperty + " (" + propertyID + ") was loaded");
@@ -66,12 +66,12 @@
             console.log("Error for small query for: " + tripleDetails.selectedProperty + " (" + propertyID + "):\n" + err 
             + "\nTripleDetails for debugging:", tripleDetails);
         });
-        let bigOutput:Promise<{propertyID:string,data:any}> = queryDispatcher.query(bigSparqlQuery, propertyID);
+        let bigOutput:Promise<{queryID:string,data:any}> = queryDispatcher.query(bigSparqlQuery, propertyID);
         
         await smallOutput;
         renewOnclickEvents();
         await bigOutput.then(queryJson => {
-            if (queryJson.propertyID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
+            if (queryJson.queryID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
                 examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
             }
             console.log("Big query for " + tripleDetails.selectedProperty + " (" + propertyID + ") was loaded");

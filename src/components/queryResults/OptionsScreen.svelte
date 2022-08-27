@@ -86,10 +86,6 @@
         padding:3px;
     }
 
-    .bracketsText {
-        font-size: 12px; 
-    }
-
     label[for=displayVariables] {
         font-size: 18px;
         font-weight: 500;
