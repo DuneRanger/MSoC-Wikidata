@@ -221,12 +221,14 @@ WHERE {
 
                 queryDispatcher.query(resultCountQuery, now).then(queryJSON => {
                     // console.log ("\n\n\n=================\n\n\n", queryJSON.queryID, "\n", lastResultQuery.toString(), "\n\n", queryJSON.data.results.bindings[0]["resultsNum"].value)
-                    if (queryJSON.data == "Timeout") {
-                        queryResults = "Přílíš moc aby se rychle našli"; // Buď žádný nebo velmi mnoho
-                    } else if (typeof queryJSON.data == "string") {
-                        throw queryJSON.data
-                    } else if (queryJSON.queryID == lastResultQueryID.toString()) {
-                        queryResults = queryJSON.data.results.bindings[0]["resultsNum"].value;
+                    if (queryJSON.queryID == lastResultQueryID.toString()) {
+                        if (queryJSON.data == "Timeout") {
+                            queryResults = "Přílíš mnoho možností na hledání"; // Buď žádný nebo velmi mnoho
+                        } else if (typeof queryJSON.data == "string") {
+                            throw queryJSON.data
+                        } else {
+                            queryResults = queryJSON.data.results.bindings[0]["resultsNum"].value;
+                        }
                     }
                 }).catch(err => {
                     console.log("Error for estimated result count\n" + err);
