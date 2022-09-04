@@ -1,107 +1,41 @@
-# This repo is no longer maintained. Consider using `npm init vite` and selecting the `svelte` option or  if you want a full-fledged app framework and don't mind using pre-1.0 software  use [SvelteKit](https://kit.svelte.dev), the official application framework for Svelte.
+# MSoC Projekt - Querying to Wikidata
 
----
+## Abstract
+A webpage which allows users to build their own SPARQL query, querying to wikidata.com, with a simplified and limited UI
 
-# svelte app
+3 initial Items/Entities
+For each there is a list of properties that can be chosen
+These properties can be numbers, dates, coordinates, strings, image urls, webpage urls
 
-This is a project template for [Svelte](https://svelte.dev) apps. It lives at https://github.com/sveltejs/template.
+When you select an Item and a Property
+Latter Triples only allow allwo you to work with the Item and properties that you have selected
+(i.e. you cannot choose to look for a person and a unrelated building)
+You can however look for a person, his residency, and choose a property for the residency (i.e country, coordinates)
+Proeprties for each Item/property are saved in a local database which was generated through broad, generalised queries
+which were manually filtered through, to ensure the quality and correctness of each property
+(i.e Currency won't have the property convert to SI units)
+A detailed explanasion of how the database was generated will be given later
 
-To create a new project based on this template using [degit](https://github.com/Rich-Harris/degit):
+When selecting a property, a input box will pop up, which allows you to search for a concrete value
+For images and weblinks, you cannot input a value, due to their nature and chances of ruining a query
+The same applies for coordinates, due to the fact that they are saved as a Point(-0, 0) function and have no way to simply convert to a label like 0°N 0°E
 
-```bash
-npx degit sveltejs/template svelte-app
-cd svelte-app
-```
+In wikidata, numbers are saved without units, so users have to input their value in whatever they believe to be the saved units
+This is told to the user with the help of a small i icon in the input box
+You can also choose the interval of the value.
+So you can choose less than, less than or equal, greater than, greater than or equal or exactly
+If the user wants to confine values into an interval from 10 to 50, they can choose the property, set value greater than 10
+And then choose the property again and set the value less than 50
 
-*Note that you will need to have [Node.js](https://nodejs.org) installed.*
+When choosing a date, users can choose intervals, similarly to numerical values
+They can also choose a precision of the date. This is because the date type input only sends an on:input event when a full date is given
+This is told to the user with the help of a small i icon in the input box
+This means the user cannot set a date --/--/2000
+So a created another button where they can set the precision of the wanted value (as year, month or day)
+This allows users to set a date 01/01/2000 with a precision of month and it will find all dates with --/01/2000 in them
 
-
-## Get started
-
-Install the dependencies...
-
-```bash
-cd svelte-app
-npm install
-```
-
-...then start [Rollup](https://rollupjs.org):
-
-```bash
-npm run dev
-```
-
-Navigate to [localhost:8080](http://localhost:8080). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
-
-By default, the server will only respond to requests from localhost. To allow connections from other computers, edit the `sirv` commands in package.json to include the option `--host 0.0.0.0`.
-
-If you're using [Visual Studio Code](https://code.visualstudio.com/) we recommend installing the official extension [Svelte for VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode). If you are using other editors you may need to install a plugin in order to get syntax highlighting and intellisense.
-
-## Building and running in production mode
-
-To create an optimised version of the app:
-
-```bash
-npm run build
-```
-
-You can run the newly built app with `npm run start`. This uses [sirv](https://github.com/lukeed/sirv), which is included in your package.json's `dependencies` so that the app will work when you deploy to platforms like [Heroku](https://heroku.com).
-
-
-## Single-page app mode
-
-By default, sirv will only respond to requests that match files in `public`. This is to maximise compatibility with static fileservers, allowing you to deploy your app anywhere.
-
-If you're building a single-page app (SPA) with multiple routes, sirv needs to be able to respond to requests for *any* path. You can make it so by editing the `"start"` command in package.json:
-
-```js
-"start": "sirv public --single"
-```
-
-## Using TypeScript
-
-This template comes with a script to set up a TypeScript development environment, you can run it immediately after cloning the template with:
-
-```bash
-node scripts/setupTypeScript.js
-```
-
-Or remove the script via:
-
-```bash
-rm scripts/setupTypeScript.js
-```
-
-If you want to use `baseUrl` or `path` aliases within your `tsconfig`, you need to set up `@rollup/plugin-alias` to tell Rollup to resolve the aliases. For more info, see [this StackOverflow question](https://stackoverflow.com/questions/63427935/setup-tsconfig-path-in-svelte).
-
-## Deploying to the web
-
-### With [Vercel](https://vercel.com)
-
-Install `vercel` if you haven't already:
-
-```bash
-npm install -g vercel
-```
-
-Then, from within your project folder:
-
-```bash
-cd public
-vercel deploy --name my-project
-```
-
-### With [surge](https://surge.sh/)
-
-Install `surge` if you haven't already:
-
-```bash
-npm install -g surge
-```
-
-Then, from within your project folder:
-
-```bash
-npm run build
-surge public my-project.surge.sh
-```
+Finally, when users select a property which has string values an input box will appear where they can normally type the value they are looking for
+To help give users an example of what they can input, a query is sent containing 100, then 2000 possible values for that triple.
+This allows users to possible search for a value from the ones that are loaded and to realise that there are multiple possible values (i.e. for citizenship - Němci, Baltští Němci, Sudetští Němci)
+Of course, if the user types in their own wanted value, then it cannot be guaranteed that the value is in the wikidata database
+This is told to the user with the help of a small i icon in the input box
