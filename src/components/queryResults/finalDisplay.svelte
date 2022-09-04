@@ -106,24 +106,24 @@
             }
 
     function updateMainQuery() {
-        mainQuery = `SELECT ${labels.map((x, i) => labelsDisplayParity[i] ? x : "").join(" ")} ${displayWikiArticle ? "?Stránka" : ""}
-WHERE {
-    ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
-    ${displayWikiArticle ? "?Stránka schema:about ?0. ?Stránka schema:isPartOf <https://en.wikipedia.org/>." : ""}
-    ${nameLine?.wantedValue && !thoroughFilterOption ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
-    ${queryLines.map(formatTripleAndFilter).join("")}
-        
-    SERVICE wikibase:label { 
-        bd:serviceParam wikibase:language "${labelLanguages}" .
-        ${[...uniqueVariables].map((x, i) => `${x} rdfs:label ${labels[i]} .`).join("\n\t\t")}
-    }
-    ${labelLanguages == "cs" ? `FILTER(LANG(${labels[0]}) = "cs")` : ""}
-    ${validTriples.map((x, i) => GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "string" 
-    ? (labelLanguages == "cs" ? `FILTER(LANG(${labels[i+1]}) = "cs")\n\t` : "") + (thoroughFilterOption && x.selectedValue ? `FILTER(CONTAINS(${labels[i+1]}, "${x.selectedValue}"))\n\t` : "")
-    : `BIND(${[...uniqueVariables][i+1]} AS ${labels[i+1]})\n\t`).join("")}
-}
-LIMIT ${resultsLimit}
-${defaultViewOption}`;
+        mainQuery = `SELECT ${labels.map((x, i) => labelsDisplayParity[i] ? x : "").join(" ")} ${displayWikiArticle ? "?Stránka" : ""}\n`
+            + `WHERE {\n`
+            + `    ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .\n`
+            + `    ${displayWikiArticle ? "?Stránka schema:about ?0. ?Stránka schema:isPartOf <https://en.wikipedia.org/>." : ""}\n`
+            + `    ${nameLine?.wantedValue && !thoroughFilterOption ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}\n`
+            + `    ${queryLines.map(formatTripleAndFilter).join("")}\n`
+            + `        \n`
+            + `    SERVICE wikibase:label { \n`
+            + `        bd:serviceParam wikibase:language "${labelLanguages}" .\n`
+            + `        ${[...uniqueVariables].map((x, i) => `${x} rdfs:label ${labels[i]} .`).join("\n\t\t")}\n`
+            + `    }\n`
+            + `    ${labelLanguages == "cs" ? `FILTER(LANG(${labels[0]}) = "cs")` : ""}\n`
+            + `    ${validTriples.map((x, i) => GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "string"
+                    ? (labelLanguages == "cs" ? `FILTER(LANG(${labels[i+1]}) = "cs")\n\t` : "") + (thoroughFilterOption && x.selectedValue ? `FILTER(CONTAINS(${labels[i+1]}, "${x.selectedValue}"))\n\t` : "")
+                    : `BIND(${[...uniqueVariables][i+1]} AS ${labels[i+1]})\n\t`).join("")}\n`
+            + `}\n`
+            + `LIMIT ${resultsLimit}\n`
+            + `${defaultViewOption}`;
 
             console.log("Main query for Iframe Display:\n" + mainQuery);
     }
@@ -181,9 +181,14 @@ WHERE {
             queryResultsCount = "...";
             console.log("Query for estimated result count\n" + resultCountQuery);
 
-            queryDispatcher.query(resultCountQuery, "redundant").then(queryJSON => {
-                console.log(queryJSON.data.results.bindings)
-                queryResultsCount = queryJSON.data.results.bindings[0]["resultsNum"].value;
+            queryDispatcher.query(resultCountQuery, "redundant").then(queryJson => {
+                if (queryJson.data == "Timeout") {
+                    queryResultsCount = "Přílíš mnoho možností na hledání";
+                } else if (typeof queryJson.data == "string") {
+                    throw queryJson.data
+                } else {
+                    queryResultsCount = queryJson.data.results.bindings[0]["resultsNum"].value;
+                }
             }).catch(err => {
                 console.log("Error for estimated result count\n" + err);
                 queryResultsCount = "Nastala chyba při načtení";

@@ -2,7 +2,7 @@
     import {createEventDispatcher} from "svelte";
     import InfoSign from "./InfoSign.svelte";
     import GlobalVariables from "./../GlobalVariables";
-    import type {selectedTripleDetails} from "./../GlobalVariables";
+    import type {selectedTripleDetails, queryTriple} from "./../GlobalVariables";
     import { SPARQLQueryDispatcher } from "./../SPARQLQueryDispatcher";
     const dispatch:any = createEventDispatcher();
     
@@ -12,78 +12,208 @@
         });
     }
 
+    export let searchInputValuesOption:number;
+    export let allTriples:Array<selectedTripleDetails>; //For smarter querying
     export let tripleDetails:selectedTripleDetails;
 
     const queryDispatcher:any = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
     let examples:Array<string>|undefined = undefined;
     let LoadingExamples:boolean = true;
 
+    //Will trigger this function when the triple's property or the query option changes
     $: temp = tripleDetails.selectedProperty;
-    $: temp, queryExampleValues();
+    $: temp, searchInputValuesOption, queryExampleValues();
     async function queryExampleValues() {
         if (!tripleDetails.selectedItem || !tripleDetails.selectedProperty) return;
-        examples = undefined;
+        examples = [];
         LoadingExamples = true;
         let propertyID:string = GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id;
-        let sparqlQuery:string = `select distinct ?value ?valueLabel
-            where {
-            {
-                select distinct ?value 
-                where {
-                ?subject ${propertyID} ?value.
-                
-                }group by ?value limit 100
-            } 
-            SERVICE wikibase:label { 
-                bd:serviceParam wikibase:language "cs". 
-                ?value rdfs:label ?valueLabel
+        switch (searchInputValuesOption) {
+            case 0:
+                for (let x = 0; x < 3; x++) {
+                    await queryDispatcher.query(`select distinct ?value ?valueLabel\n`
+                    + `where {\n`
+                    + `{\n`
+                    + `    select distinct ?value \n`
+                    + `    where {\n`
+                    + `    ?subject ${propertyID} ?value.\n`
+                    + `    \n`
+                    + `    }group by ?value limit ${[100, 500, 2500][x]}\n`
+                    + `} \n`
+                    + `service wikibase:label { \n`
+                    + `    bd:serviceParam wikibase:language "cs". \n`
+                    + `    ?value rdfs:label ?valueLabel\n`
+                    + `}\n`
+                    + `filter (lang(?valueLabel) = "cs")\n`
+                    + `}`, propertyID)
+                    .then(queryJson => {
+                        if (typeof queryJson.data == "string") {
+                            console.log(`Error for fast${["small", "medium", "big"][x]} query for: ${tripleDetails.selectedProperty} (${propertyID}):\n`
+                            + `${queryJson.data}\n`
+                            + `TripleDetails for debugging: ${tripleDetails}`);
+                        }
+                        if (queryJson.queryID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
+                            examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
+                        }
+                        console.log(`Fast ${["small", "medium", "big"][x]} query for ${tripleDetails.selectedProperty} (${propertyID}) was loaded`);
+                    })
+                    .catch(err => {
+                        console.log(`Unexpected error for fast ${["small", "medium", "big"][x]} query for: ${tripleDetails.selectedProperty} (${propertyID}):
+                        ${err}`);
+                    });
+                    renewOnclickEvents();
+                }
+                break;
+            case 1:
+                //Put only in this case because it is guaranteed to be slower and possibly rewrite the results whe switching to the faster method
+                let currentOption = searchInputValuesOption;
+                let validTriples:Array<selectedTripleDetails> = [...allTriples].filter(x => x.selectedProperty);
+                let nameLine:queryTriple;
+                let tripleIndex:number;
+                //A check for a custom property (currently only "Jméno")
+                for (let x = validTriples.length-1; x > -1 ; x--) {
+                    if (validTriples[x].selectedProperty == "Jméno") {
+                        nameLine = {item:"?0", property:GlobalVariables.queryEntityInfo[validTriples[x].selectedProperty].id, value:"", wantedValue:validTriples[x].selectedValue}
+                        validTriples.splice(x, 1);
+                    }
+                }
+
+                let queryValidity:boolean = (validTriples.length != 0);
+
+                let queryLines:Array<queryTriple> = [];
+                let uniqueVariables:Set<string> = new Set();
+
+                function formatTripleAndFilter(queryLine:queryTriple, lineIndex:number):string {
+                            let output:string = "";
+                            switch (GlobalVariables.queryEntityInfo[validTriples[lineIndex].selectedProperty].valueType) {
+                                case "string":
+                                    output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
+                                    if (queryLine.wantedValue != "") output += `${queryLine.value} rdfs:label "${queryLine.wantedValue}"@cs .\n\t`;
+                                    break;
+                                case "date":
+                                    output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
+                                    if (queryLine.wantedValue != "") {
+                                        if (validTriples[lineIndex].selectedTimePeriod == "Přesně") {
+                                            switch (validTriples[lineIndex].selectedTimePrecision) {
+                                                case "Den":
+                                                    output+=`FILTER(DAY(${queryLine.value}) = DAY("${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime))\n\t`;
+                                                case "Měsíc":
+                                                    output+=`FILTER(MONTH(${queryLine.value}) =  MONTH("${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime))\n\t`;
+                                                case "Rok":
+                                                    output+=`FILTER(YEAR(${queryLine.value}) = YEAR("${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime))\n\t`;
+                                            }
+                                        } else {
+                                            let periodIntervalSymbol:string = {"Po": ">", "Před": "<"}[validTriples[lineIndex].selectedTimePeriod];
+                                            switch (validTriples[lineIndex].selectedTimePrecision) {
+                                                case "Rok":
+                                                    output+=`FILTER(${queryLine.value} ${periodIntervalSymbol} "${queryLine.wantedValue.slice(0,4)}-01-01T00:00:00Z"^^xsd:dateTime)\n\t`;
+                                                    break;
+                                                case "Měsíc":
+                                                    output+=`FILTER(${queryLine.value} ${periodIntervalSymbol} "${queryLine.wantedValue.slice(0,7)}-01T00:00:00Z"^^xsd:dateTime)\n\t`;
+                                                    break;
+                                                case "Den":
+                                                    output+=`FILTER(${queryLine.value} ${periodIntervalSymbol} "${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime)\n\t`;
+                                            }
+                                        }
+                                    }
+                                    break;
+                                case "number":
+                                    output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .`;
+                                    if (queryLine.wantedValue != "") {
+                                        let intervalSymbol:string = {"Méně nebo rovno": "<=", "Méně než": "<", "Více nebo rovno": ">=", "Více než": ">", "Rovno": "="}[validTriples[lineIndex].selectedNumberInterval];
+                                        output+=`FILTER(${queryLine.value} ${intervalSymbol} ${queryLine.wantedValue})\n\t`;
+                                    }
+                                    break;
+                                case "link":
+                                case "image":
+                                case "coordinates":
+                                    output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
+                                    break;
+                            }
+                            return output;
+                        }
+
+                function updateQueryTriples() {
+                    if (!queryValidity) {
+                    } else {
+                        
+                        for (let x = 0; x < validTriples.length; x++) {
+                            let item:string = "";
+                            for (let y = 0; y < x; y++) {
+                                if (validTriples[x].selectedItem == validTriples[y].selectedItem) {
+                                    item = queryLines[y].item;
+                                    break;
+                                }
+                            }
+                            if (!item) {
+                                for (let y = 0; y < x; y++) {
+                                    if (validTriples[x].selectedItem == validTriples[y].selectedProperty) {
+                                        item = queryLines[y].value;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!item) item = `?${x*2}`;
+
+                            let value:string = `?${x*2+1}`;
+                            if (validTriples[x].tripleID == tripleDetails.tripleID) tripleIndex = x;
+
+                            queryLines.push({item:item, property:GlobalVariables.queryEntityInfo[validTriples[x].selectedProperty].id, value:value, wantedValue:validTriples[x].selectedValue});
+                        }
+
+                        for (let x of queryLines) {
+                            uniqueVariables.add(x.item);
+                            if (x.value[0] == "?") uniqueVariables.add(x.value);
+                        }
+                    }
+                }
+                updateQueryTriples();
+                for (let x = 0; x < 3; x++) {
+                    await queryDispatcher.query(`select distinct ?value ?valueLabel\n`
+                    + `where {\n`
+                    + `    ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .\n`
+                    + `    ${nameLine?.wantedValue ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}\n`
+                    + `    ${queryLines.map(formatTripleAndFilter).join("")}\n`
+                    + `    bind(${queryLines[tripleIndex].value} as ?value)\n`
+                    + `    service wikibase:label { \n`
+                    + `        bd:serviceParam wikibase:language "cs" .\n`
+                    + `        ?value rdfs:label ?valueLabel .\n`
+                    + `    }\n`
+                    + `    filter(lang(?valueLabel) = "cs")\n`
+                    + `} limit ${[100, 500, 2000][x]}`, propertyID)
+                    .then(queryJson => {
+                        if (!("results" in queryJson.data)) {
+                            console.log(`Error for slow ${["small", "medium", "big"][x]} query for: ${tripleDetails.selectedProperty} (${propertyID}):\n`
+                            + `${queryJson.data}\n`
+                            + `TripleDetails for debugging:\n`
+                            + `select distinct ?value ?valueLabel\n`
+                            + `where {\n`
+                            + `    ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .\n`
+                            + `    ${nameLine?.wantedValue ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}\n`
+                            + `    ${queryLines.map(formatTripleAndFilter).join("")}\n`
+                            + `    bind(${queryLines[tripleIndex].value} as ?value)\n`
+                            + `    service wikibase:label { \n`
+                            + `        bd:serviceParam wikibase:language "cs" .\n`
+                            + `        ?value rdfs:label ?valueLabel .\n`
+                            + `    }\n`
+                            + `    filter(lang(?valueLabel) = "cs")\n`
+                            + `} limit ${[100, 500, 2000][x]}`);
+                        } else if (queryJson.queryID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id && currentOption == searchInputValuesOption) {
+                            examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
+                        }
+                        console.log(`Slow ${["small", "medium", "big"][x]} query for ${tripleDetails.selectedProperty} (${propertyID}) was loaded`);
+                    })
+                    .catch(err => {
+                        console.log(`Unexpected error for slow ${["small", "medium", "big"][x]} query for: ${tripleDetails.selectedProperty} (${propertyID}):\n`
+                        + `${err}`);
+                    });
+                    renewOnclickEvents();
+                }
+                break;
             }
-            filter (lang(?valueLabel) = "cs")
-            }`;
-        let bigSparqlQuery:string = `select distinct ?value ?valueLabel
-            where {
-            {
-                select distinct ?value 
-                where {
-                ?subject ${propertyID} ?value.
-                
-                }group by ?value limit 2500
-            } 
-            SERVICE wikibase:label { 
-                bd:serviceParam wikibase:language "cs". 
-                ?value rdfs:label ?valueLabel
-            }
-            filter (lang(?valueLabel) = "cs")
-            }`;
-        let smallOutput:Promise<{queryID:string,data:any}> = queryDispatcher.query(sparqlQuery, propertyID).then(queryJson => {
-            if (queryJson.queryID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
-                examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
-            }
-            console.log("Small query for: " + tripleDetails.selectedProperty + " (" + propertyID + ") was loaded");
-        })
-        .catch(err => {
-            examples = [];
-            console.log("Error for small query for: " + tripleDetails.selectedProperty + " (" + propertyID + "):\n" + err 
-            + "\nTripleDetails for debugging:", tripleDetails);
-        });
-        let bigOutput:Promise<{queryID:string,data:any}> = queryDispatcher.query(bigSparqlQuery, propertyID);
-        
-        await smallOutput;
-        renewOnclickEvents();
-        await bigOutput.then(queryJson => {
-            if (queryJson.queryID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id) {
-                examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
-            }
-            console.log("Big query for " + tripleDetails.selectedProperty + " (" + propertyID + ") was loaded");
-        })
-        .catch(err => {
-            examples = [];
-            console.log("Error for big query for: " + tripleDetails.selectedProperty + " (" + propertyID + "):\n" + err 
-            + "\nTripleDetails for debugging:", tripleDetails);
-        });
-        renewOnclickEvents();
         LoadingExamples = false;
     }
+
 
     function renewOnclickEvents():void {
         //HTML type is not used due to each element not having the same amount of properties
@@ -116,7 +246,7 @@
         inputBox.onfocus = function ():void {
             container.style.zIndex = (100-tripleDetails.tripleID).toString();
             exampleValues.style.display = 'block';
-            inputBox.style.borderRadius = "3px 3px 0 0";  
+            inputBox.style.borderRadius = "3px 3px 0 0";
         };
 
         // onblur disrupts options.onclick, so this method of unfocusing was chosen instead
@@ -124,7 +254,7 @@
             if (!container.contains(e.target)) {
                 container.style.zIndex = "0";
                 exampleValues.style.display = "none";
-                inputBox.style.borderRadius = "3px";  
+                inputBox.style.borderRadius = "3px";
             }
         });
 

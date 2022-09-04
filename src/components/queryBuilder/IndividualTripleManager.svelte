@@ -4,8 +4,10 @@
     import DateInput from "./DateInput.svelte";
     import SearchInput from "./SearchInput.svelte";
     import GlobalVariables from "./../GlobalVariables";
-    import type {selectedTripleDetails, entityInfoObject} from "./../GlobalVariables";
+    import type {selectedTripleDetails} from "./../GlobalVariables";
     
+    export let searchInputValuesOption:number = 0;
+    export let allTriples:Array<selectedTripleDetails>; //exported only for smarter searchInput querying
     export let tripleDetails:selectedTripleDetails;
 
     import {createEventDispatcher} from "svelte";
@@ -75,11 +77,11 @@
         {#if !itemsProperties.includes(tripleDetails.selectedProperty)}
             <input disabled>
         {:else if TypeOfPropertyValue == "string"}
-            <SearchInput tripleDetails={tripleDetails} on:InputChange={receiveValueChange}></SearchInput>
+            <SearchInput {allTriples} {tripleDetails} {searchInputValuesOption} on:InputChange={receiveValueChange}></SearchInput>
         {:else if TypeOfPropertyValue == "date"}
-            <DateInput tripleDetails={tripleDetails} on:PeriodChange={receiveTimePeriodChange} on:InputChange={receiveValueChange} on:PrecisionChange={receiveTimePrecisionChange}></DateInput>
+            <DateInput {tripleDetails} on:PeriodChange={receiveTimePeriodChange} on:InputChange={receiveValueChange} on:PrecisionChange={receiveTimePrecisionChange}></DateInput>
         {:else if TypeOfPropertyValue == "number"}
-            <NumberInput tripleDetails={tripleDetails} on:IntervalChange={receiveNumberIntervalChange} on:InputChange={receiveValueChange}></NumberInput>
+            <NumberInput {tripleDetails} on:IntervalChange={receiveNumberIntervalChange} on:InputChange={receiveValueChange}></NumberInput>
         {:else if TypeOfPropertyValue == "link" || TypeOfPropertyValue == "image"}
             <input disabled placeholder="Výsledek bude ve formě odkazu" style="width:250px">
         {:else if TypeOfPropertyValue == "coordinates"}

@@ -1,21 +1,15 @@
 <script lang="ts">
     import RDFSTripleSet from "./components/queryBuilder/IndividualTripleManager.svelte";
-    import ResultsDisplay from "./components/queryResults/finalDisplay.svelte"
+    import ResultsDisplay from "./components/queryResults/finalDisplay.svelte";
     import GlobalVariables from "./components/GlobalVariables";
     import type {selectedTripleDetails} from "./components/GlobalVariables";
-    let queryResults:number|string = 0;
-
-
-
-
-    let resultsVisibility:boolean = false;
-    function toggleResults():void {
-        resultsVisibility = !resultsVisibility;
-    }
+    import InfoSign from "./components/queryResults/InfoSign.svelte";
     
+    let queryResults:number|string = 0;
 
     let triples:Array<selectedTripleDetails> = [];
     const maxTriples:number = 8;
+    
     for (let x = 0; x < maxTriples; x++) {
         triples.push({
             "tripleID":x,
@@ -26,14 +20,23 @@
             "selectedNumberInterval": "Méně než",
             "selectedTimePeriod": "Před",
             "selectedTimePrecision": "Rok",
-            "selectedValue":""})
+            "selectedValue":""});
         // Default values are pushed for all possibilities to simplify default selectors for each input box 
     }
 
     triples[0].items = GlobalVariables.queryItemVariables;
     triples[0].visibility = true;
     
-    let ActivatorForResultCount = 0;
+    let resultsVisibility:boolean = false;
+    function toggleResults():void {
+        resultsVisibility = !resultsVisibility;
+    }
+
+    let searchInputValuesOption:number;
+    //Put into it's own function to avoid a red squiggly line saying that .srcElement is deprecated and .value doesn't exist on element Event
+    function updateSearchInputValuesOption(event) {
+        searchInputValuesOption = +event.srcElement.value;
+    }
 
     function updatePossibleItemsForTriples():void {
         triples[0].items = GlobalVariables.queryItemVariables;
@@ -92,17 +95,15 @@
             }
             triples.sort((a, b) => +b.visibility - +a.visibility);
             triples[0].items = GlobalVariables.queryItemVariables;
-            ActivatorForResultCount++
         }
         
     }
 
-    import type {queryTriple} from "./components/GlobalVariables"
+    import type {queryTriple} from "./components/GlobalVariables";
     import {SPARQLQueryDispatcher} from "./components/SPARQLQueryDispatcher";
-import InfoSign from "./components/queryBuilder/InfoSign.svelte";
     let lastResultQueryID:number = +new Date(); //Ensures that the last query sent will be the one displayed
     let lastResultQuery:string; //Ensures that the same query isn't being sent every 5 seconds
-    setInterval(resultsCounter, 5000)
+    setInterval(resultsCounter, 5000);
     function resultsCounter() {
         const queryDispatcher = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
 
@@ -189,7 +190,7 @@ import InfoSign from "./components/queryBuilder/InfoSign.svelte";
                     case "number":
                         output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .`;
                         if (queryLine.wantedValue != "") {
-                            let intervalSymbol:string = {"Méně nebo rovno": "<=", "Méně než": "<", "Více nebo rovno": ">=", "Více než": ">", "Rovno": "="}[validTriples[lineIndex].selectedNumberInterval]
+                            let intervalSymbol:string = {"Méně nebo rovno": "<=", "Méně než": "<", "Více nebo rovno": ">=", "Více než": ">", "Rovno": "="}[validTriples[lineIndex].selectedNumberInterval];
                             output+=`FILTER(${queryLine.value} ${intervalSymbol} ${queryLine.wantedValue})\n\t`;
                         }
                         break;
@@ -203,12 +204,12 @@ import InfoSign from "./components/queryBuilder/InfoSign.svelte";
             }
 
 
-            resultCountQuery = `SELECT (COUNT(*) AS ?resultsNum)
-WHERE {
-    ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
-    ${nameLine?.wantedValue ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
-    ${queryLines.map(formatTripleAndFilter).join("")}
-}`;
+            resultCountQuery = `SELECT (COUNT(*) AS ?resultsNum)\n`
+                + `WHERE {\n`
+                + `    ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .\n`
+                + `    ${nameLine?.wantedValue ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}\n`
+                + `    ${queryLines.map(formatTripleAndFilter).join("")}\n`
+                + `}`;
 
             
             let now = +new Date();
@@ -219,15 +220,15 @@ WHERE {
                 queryResults = "...";
                 console.log("Query for estimated result count: " + lastResultQueryID + "\n" + resultCountQuery);
 
-                queryDispatcher.query(resultCountQuery, now).then(queryJSON => {
-                    // console.log ("\n\n\n=================\n\n\n", queryJSON.queryID, "\n", lastResultQuery.toString(), "\n\n", queryJSON.data.results.bindings[0]["resultsNum"].value)
-                    if (queryJSON.queryID == lastResultQueryID.toString()) {
-                        if (queryJSON.data == "Timeout") {
+                queryDispatcher.query(resultCountQuery, now).then(queryJson => {
+                    // console.log ("\n\n\n=================\n\n\n", queryJson.queryID, "\n", lastResultQuery.toString(), "\n\n", queryJson.data.results.bindings[0]["resultsNum"].value)
+                    if (queryJson.queryID == lastResultQueryID.toString()) {
+                        if (queryJson.data == "Timeout") {
                             queryResults = "Přílíš mnoho možností na hledání"; // Buď žádný nebo velmi mnoho
-                        } else if (typeof queryJSON.data == "string") {
-                            throw queryJSON.data
+                        } else if (typeof queryJson.data == "string") {
+                            throw queryJson.data;
                         } else {
-                            queryResults = queryJSON.data.results.bindings[0]["resultsNum"].value;
+                            queryResults = queryJson.data.results.bindings[0]["resultsNum"].value;
                         }
                     }
                 }).catch(err => {
@@ -264,15 +265,34 @@ WHERE {
         background-color: #6ca042;
         color: black;
     }
+
+    #queryBuilderOptions {
+        padding: 10px 10px 2px 10px;
+    }
+
+    #searchValuesQuerySelector {
+        padding: 0;
+        margin: 0;
+        height: auto;
+        font-size: 14px;
+    }
 </style>
 
 <main>
     {#if resultsVisibility}
         <ResultsDisplay validTriples={[...triples].filter(x => x.selectedProperty)} on:toggleResults={toggleResults}></ResultsDisplay>
     {:else}
+        <div id="queryBuilderOptions">
+            <select id="searchValuesQuerySelector" on:change={updateSearchInputValuesOption}>
+                <option selected value="0">Rychlé, ale náhodné příklady</option>
+                <option value="1">Pomalé, ale přesné príklady</option>
+            </select>
+            <InfoSign text="Mění způsob hledání příkladů u textových polí"></InfoSign>
+        </div>
+        <hr style="border-color: black; background-color: black; border-width: 0.5px">
         {#each triples as triple}
             {#if triple.visibility}
-                <RDFSTripleSet tripleDetails={triple} on:tripleDetailsChange={handleTripleDetailsChange}></RDFSTripleSet>
+                <RDFSTripleSet allTriples={triples} tripleDetails={triple} {searchInputValuesOption} on:tripleDetailsChange={handleTripleDetailsChange}></RDFSTripleSet>
             {/if}
         {/each}
         <p style="margin-left: 8px">Přibližný počet výsledků: {queryResults}</p>
