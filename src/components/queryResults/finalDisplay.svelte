@@ -15,6 +15,8 @@
     let viewMapOption:boolean = false;
     let viewImageOption:boolean = false;
     let defaultViewOption:string = "#";
+    //Adds the possibility of the option to change the default view
+    //Coordinates overwrite images, because map view can display images as well
     for (let x of validTriples) {
         if (GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "image") {
             viewImageOption = true;
@@ -34,7 +36,7 @@
     let nameLine:queryTriple;
     //A check for a custom property (currently only "Jméno")
     for (let x = validTriples.length-1; x > -1 ; x--) {
-        if (validTriples[x].selectedProperty == "Jméno") {
+        if (validTriples[x].selectedProperty == "Jméno" || validTriples[x].selectedProperty == "Název") {
             nameLine = {item:"?0", property:GlobalVariables.queryEntityInfo[validTriples[x].selectedProperty].id, value:"", wantedValue:validTriples[x].selectedValue}
             validTriples.splice(x, 1);
         }
@@ -55,56 +57,59 @@
 
     $: encodedMainQueryLink = iframeURL + encodeURIComponent(mainQuery);
 
+    //Formats each triple into equal lines for the query
+    //There are different cases based on the type of value and if there is a wanted value
     function formatTripleAndFilter(queryLine:queryTriple, lineIndex:number):string {
-                let output:string = "";
-                switch (GlobalVariables.queryEntityInfo[validTriples[lineIndex].selectedProperty].valueType) {
-                    case "string":
-                        output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
-                        if (queryLine.wantedValue != "" && !thoroughFilterOption) output += `${queryLine.value} rdfs:label "${queryLine.wantedValue}"@cs .\n\t`;
-                        break;
-                    case "date":
-                        output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
-                        if (queryLine.wantedValue != "") {
-                            if (validTriples[lineIndex].selectedTimePeriod == "Přesně") {
-                                switch (validTriples[lineIndex].selectedTimePrecision) {
-                                    case "Den":
-                                        output+=`FILTER(DAY(${queryLine.value}) = DAY("${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime))\n\t`;
-                                    case "Měsíc":
-                                        output+=`FILTER(MONTH(${queryLine.value}) =  MONTH("${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime))\n\t`;
-                                    case "Rok":
-                                        output+=`FILTER(YEAR(${queryLine.value}) = YEAR("${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime))\n\t`;
-                                }
-                            } else {
-                                let periodIntervalSymbol:string = {"Po": ">", "Před": "<"}[validTriples[lineIndex].selectedTimePeriod];
-                                switch (validTriples[lineIndex].selectedTimePrecision) {
-                                    case "Rok":
-                                        output+=`FILTER(${queryLine.value} ${periodIntervalSymbol} "${queryLine.wantedValue.slice(0,4)}-01-01T00:00:00Z"^^xsd:dateTime)\n\t`;
-                                        break;
-                                    case "Měsíc":
-                                        output+=`FILTER(${queryLine.value} ${periodIntervalSymbol} "${queryLine.wantedValue.slice(0,7)}-01T00:00:00Z"^^xsd:dateTime)\n\t`;
-                                        break;
-                                    case "Den":
-                                        output+=`FILTER(${queryLine.value} ${periodIntervalSymbol} "${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime)\n\t`;
-                                }
-                            }
+        let output:string = "";
+        switch (GlobalVariables.queryEntityInfo[validTriples[lineIndex].selectedProperty].valueType) {
+            case "string":
+                output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
+                if (queryLine.wantedValue != "" && !thoroughFilterOption) output += `${queryLine.value} rdfs:label "${queryLine.wantedValue}"@cs .\n\t`;
+                break;
+            case "date":
+                output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
+                if (queryLine.wantedValue != "") {
+                    if (validTriples[lineIndex].selectedTimePeriod == "Přesně") {
+                        switch (validTriples[lineIndex].selectedTimePrecision) {
+                            case "Den":
+                                output+=`FILTER(DAY(${queryLine.value}) = DAY("${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime))\n\t`;
+                            case "Měsíc":
+                                output+=`FILTER(MONTH(${queryLine.value}) =  MONTH("${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime))\n\t`;
+                            case "Rok":
+                                output+=`FILTER(YEAR(${queryLine.value}) = YEAR("${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime))\n\t`;
                         }
-                        break;
-                    case "number":
-                        output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .`;
-                        if (queryLine.wantedValue != "") {
-                            let intervalSymbol:string = {"Méně nebo rovno": "<=", "Méně než": "<", "Více nebo rovno": ">=", "Více než": ">", "Rovno": "="}[validTriples[lineIndex].selectedNumberInterval]
-                            output+=`FILTER(${queryLine.value} ${intervalSymbol} ${queryLine.wantedValue})\n\t`;
+                    } else {
+                        let periodIntervalSymbol:string = {"Po": ">", "Před": "<"}[validTriples[lineIndex].selectedTimePeriod];
+                        switch (validTriples[lineIndex].selectedTimePrecision) {
+                            case "Rok":
+                                output+=`FILTER(${queryLine.value} ${periodIntervalSymbol} "${queryLine.wantedValue.slice(0,4)}-01-01T00:00:00Z"^^xsd:dateTime)\n\t`;
+                                break;
+                            case "Měsíc":
+                                output+=`FILTER(${queryLine.value} ${periodIntervalSymbol} "${queryLine.wantedValue.slice(0,7)}-01T00:00:00Z"^^xsd:dateTime)\n\t`;
+                                break;
+                            case "Den":
+                                output+=`FILTER(${queryLine.value} ${periodIntervalSymbol} "${queryLine.wantedValue}T00:00:00Z"^^xsd:dateTime)\n\t`;
                         }
-                        break;
-                    case "link":
-                    case "image":
-                    case "coordinates":
-                        output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
-                        break;
+                    }
                 }
-                return output;
-            }
+                break;
+            case "number":
+                output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .`;
+                if (queryLine.wantedValue != "") {
+                    let intervalSymbol:string = {"Méně nebo rovno": "<=", "Méně než": "<", "Více nebo rovno": ">=", "Více než": ">", "Rovno": "="}[validTriples[lineIndex].selectedNumberInterval]
+                    output+=`FILTER(${queryLine.value} ${intervalSymbol} ${queryLine.wantedValue})\n\t`;
+                }
+                break;
+            case "link":
+            case "image":
+            case "coordinates":
+                output += `${queryLine.item} ${queryLine.property} ${queryLine.value} .\n\t`;
+                break;
+         }
+        return output;
+    }
 
+    //Updates the query string using the defined variables
     function updateMainQuery() {
         mainQuery = `SELECT ${labels.map((x, i) => labelsDisplayParity[i] ? x : "").join(" ")} ${displayWikiArticle ? "?Stránka" : ""}\n`
             + `WHERE {\n`
@@ -127,19 +132,22 @@
 
             console.log("Main query for Iframe Display:\n" + mainQuery);
     }
+
     function updateQueryTriples() {
         if (!queryValidity) {
             toggleResults();
         } else {
-            
+            //Gives each component in a triple the correct variable
             for (let x = 0; x < validTriples.length; x++) {
                 let item:string = "";
+                //Checks if the item was already given a variable
                 for (let y = 0; y < x; y++) {
                     if (validTriples[x].selectedItem == validTriples[y].selectedItem) {
                         item = queryLines[y].item;
                         break;
                     }
                 }
+                //checks if the property (now an item) was already given a variable
                 if (!item) {
                     for (let y = 0; y < x; y++) {
                         if (validTriples[x].selectedItem == validTriples[y].selectedProperty) {
@@ -155,22 +163,24 @@
                 queryLines.push({item:item, property:GlobalVariables.queryEntityInfo[validTriples[x].selectedProperty].id, value:value, wantedValue:validTriples[x].selectedValue});
             }
 
+            //Adds each variable that was created into an easy Set to iterate through later
             for (let x of queryLines) {
                 uniqueVariables.add(x.item);
                 if (x.value[0] == "?") uniqueVariables.add(x.value);
             }
                 
+            //Prepares unique labels for each variable, regardless of if they will be displayed or not
             labels.push("?" + validTriples[0].selectedItem);
-
             for (let x of validTriples) {
                 labels.push(("?" + x.selectedProperty + `··˃${x.selectedItem}`).replaceAll(" ", "_"));
             }
-
+            //Assures that all labels will be displayed by default
             labelsDisplayParity = labels.map(x => true);
 
             updateMainQuery();
 
-
+            //Builds the query for the result count
+            //Although the result count isn't needed for the finalDisplay, it is queried here and just exported to OptionsScreen
             resultCountQuery = `SELECT (COUNT(*) AS ?resultsNum)
 WHERE {
     ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
@@ -184,8 +194,8 @@ WHERE {
             queryDispatcher.query(resultCountQuery, "redundant").then(queryJson => {
                 if (queryJson.data == "Timeout") {
                     queryResultsCount = "Přílíš mnoho možností na hledání";
-                } else if (typeof queryJson.data == "string") {
-                    throw queryJson.data
+                // } else if (typeof queryJson.data == "string") {
+                //     throw queryJson.data
                 } else {
                     queryResultsCount = queryJson.data.results.bindings[0]["resultsNum"].value;
                 }
