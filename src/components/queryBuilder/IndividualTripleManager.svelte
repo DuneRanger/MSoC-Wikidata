@@ -53,6 +53,7 @@
     let itemsProperties:Array<string>|undefined;
     let TypeOfPropertyValue:"string"|"number"|"date"|"link"|"coordinates"|"image"|undefined;
 
+    //These variables will update whenever tripleDetails is changed
     $: itemsProperties = tripleDetails.selectedItem ? GlobalVariables.queryEntityProperties[tripleDetails.selectedItem] : undefined;
     $: TypeOfPropertyValue = tripleDetails.selectedProperty ? GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].valueType : undefined;
     

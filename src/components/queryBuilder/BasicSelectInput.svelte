@@ -1,6 +1,5 @@
 <script lang="ts">
     import {createEventDispatcher} from "svelte";
-import InfoSign from "./InfoSign.svelte";
     const dispatch:any = createEventDispatcher();
     
     export let items:Array<string>;
@@ -8,8 +7,6 @@ import InfoSign from "./InfoSign.svelte";
     export let defaultValue:string = "";
 
     function handleEvent(event):void {
-        if (event.srcElement.value == "Jméno") {
-        }
         dispatch("change", {
             newValue: event.srcElement.value,
             index: items.indexOf(event.srcElement.value)
@@ -32,7 +29,7 @@ import InfoSign from "./InfoSign.svelte";
                 {#if item == defaultValue}
                     <option value={item} selected>{item}</option>
                 {:else}
-                    <option value={item}>{item}</option>                
+                    <option value={item}>{item}</option>
                 {/if}
             {/each}
         {/if}

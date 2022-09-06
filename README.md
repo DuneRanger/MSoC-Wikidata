@@ -112,3 +112,28 @@ After clicking on the *continue* button, an iframe from wikidata will load itsel
 Depending on the default view, the iframe will either load up as a table, an image grid, or a map.
 No matter the view mode, if the user hovers their mouse to the left edge of the iframe, they will se a menu popup, which will allow them to change the view mode to whatever wikidata is capable of with the query.
 For example, a query without images cannot be displayed as an image grid.
+
+## Database expansion
+
+### Initial Items I wanted to add
+
+- War (Q198)
+    - Doesn't have any properties saved under "properties for this type" (very surprising considering the low ID number)
+- Organisms known by a particular common name (Q55983715)
+    - Doesn't have any properties saved under "properties for this type"
+    - Other options (such as organism or animal) have the same problem and additionally, their instances were not the targeted results
+
+### Possible additions
+
+- Chemical element (Q11344)
+    - Not added yet, due to only having 9 common properties, which at the time of writing is not deemed enough to be useful
+- Historical period (Q11514315)
+    - Despite containing very popular topics, it only has 3 common properties, all related by time (this would limit the query to 1 line)
+- Sport (Q349)/Type of sport (Q31629)
+    - Whilst Type of sport has ideal instance values, neither it, nor Sport have any saved common properties
+
+### Conclusion
+
+After reading through ~500 results from Wikipedia:List of articles all languages should have (Q5460604),
+I have come to the conclusion that despite 3 initial items being a very low amount, these 3 items are surprisingly the best fit
+in terms of requirements for how the program currently works

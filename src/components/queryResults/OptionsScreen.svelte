@@ -3,7 +3,7 @@
     import InfoSign from "./InfoSign.svelte";
     const dispatch:any = createEventDispatcher();
 
-    export let validity:boolean;
+    export let validity:boolean; //validity of the query itself
     export let resultsLimit:string|number = 100;
     export let queryResultsCount:string|number;
 

@@ -33,11 +33,13 @@
     }
 
     let searchInputValuesOption:number;
+
     //Put into it's own function to avoid a red squiggly line saying that .srcElement is deprecated and .value doesn't exist on element Event
     function updateSearchInputValuesOption(event) {
         searchInputValuesOption = +event.srcElement.value;
     }
 
+    //Updates the options for the first select box in a triple
     function updatePossibleItemsForTriples():void {
         triples[0].items = GlobalVariables.queryItemVariables;
         if (triples[0].items.indexOf(triples[0].selectedItem) < 0) {
@@ -63,7 +65,8 @@
     }
 
 
-
+    //This is called whenever anything in a triple is changed
+    //It updates the visibility of each triples and calls updatePossibleItemsForTriples()
     function handleTripleDetailsChange(event):void {
         let currentID:number = triples.map(x => x.tripleID).indexOf(event.detail.tripleID);
         triples[currentID] = event.detail;
@@ -84,6 +87,7 @@
         }
         triples.sort((a, b) => +b.visibility - +a.visibility);
 
+        //Ensures that all empty triples are gone
         for (let x = 0; x <= lastVisible; x++) {
             updatePossibleItemsForTriples();
 
@@ -96,7 +100,6 @@
             triples.sort((a, b) => +b.visibility - +a.visibility);
             triples[0].items = GlobalVariables.queryItemVariables;
         }
-        
     }
 
     import type {queryTriple} from "./components/GlobalVariables";
@@ -104,6 +107,7 @@
     let lastResultQueryID:number = +new Date(); //Ensures that the last query sent will be the one displayed
     let lastResultQuery:string; //Ensures that the same query isn't being sent every 5 seconds
     setInterval(resultsCounter, 5000);
+    //A function which creates and calls a query which will return the number of results
     function resultsCounter() {
         const queryDispatcher = new SPARQLQueryDispatcher('https://query.wikidata.org/sparql');
 
@@ -113,7 +117,7 @@
         let nameLine:queryTriple;
         //A check for a custom property
         for (let x = validTriples.length-1; x > -1 ; x--) {
-            if (validTriples[x].selectedProperty == "Jméno") {
+            if (validTriples[x].selectedProperty == "Jméno" || validTriples[x].selectedProperty == "Název") {
                 nameLine = {item:"?0", property:GlobalVariables.queryEntityInfo[validTriples[x].selectedProperty].id, value:"", wantedValue:validTriples[x].selectedValue}
                 validTriples.splice(x, 1);
             }
@@ -225,8 +229,8 @@
                     if (queryJson.queryID == lastResultQueryID.toString()) {
                         if (queryJson.data == "Timeout") {
                             queryResults = "Přílíš mnoho možností na hledání"; // Buď žádný nebo velmi mnoho
-                        } else if (typeof queryJson.data == "string") {
-                            throw queryJson.data;
+                        // } else if (typeof queryJson.data == "string") {
+                        //     throw queryJson.data;
                         } else {
                             queryResults = queryJson.data.results.bindings[0]["resultsNum"].value;
                         }
