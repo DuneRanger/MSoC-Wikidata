@@ -20,10 +20,12 @@
     for (let x of validTriples) {
         if (GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "image") {
             viewImageOption = true;
+            defaultViewOption = "#defaultView:ImageGrid";
             continue;
         }
         if (GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "coordinates") {
             viewMapOption = true;
+            defaultViewOption = "#defaultView:Map";
             continue;
         }
     }
