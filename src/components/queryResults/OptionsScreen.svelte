@@ -111,7 +111,7 @@
     <br> -->
     
     Limit na počet výsledků: <input type="number" value={resultsLimit} on:change={changeResultsLimit} style="width: 100px">
-    <InfoSign text="Doporučeno v případě že načítaní trvá moc dlouho"></InfoSign>
+    <InfoSign text="Doporučeno v případě, že načítaní trvá moc dlouho"></InfoSign>
     <br>
 
     <div class="displayOptions">
@@ -122,11 +122,11 @@
             </li>
             <li>
                 <input type="checkbox" id="thoroughFilterOption" on:change={toggleFilterOption} checked={thoroughFilterOption}>
-                <label for="thoroughFilterOption">Důkladnější hledání zadaných hodnot <InfoSign text="Pomalejší, ale vhodné když jste zadali jen část jména nebo názvu"></InfoSign></label>
+                <label for="thoroughFilterOption">Důkladnější hledání zadaných hodnot <InfoSign text="Pomalejší, ale potřebné, když jste zadali jen část jména nebo názvu"></InfoSign></label>
             </li>
             <li>
                 <input type="checkbox" id="wikiArticleOption" on:change={toggleWikiArticleOption} checked={displayWikiArticle}>
-                <label for="wikiArticleOption">Najít výsledky se stránkou ve Wikipédii</label>
+                <label for="wikiArticleOption">Najít výsledky se stránkou na Wikipédii</label>
             </li>
             {#if viewMapOption}
                 <li>
@@ -143,7 +143,7 @@
     </div>
     <br>
     <div class="displayOptions" id="diplayVariables">
-        <label for="displayVariables">Vyberte které proměny uvidíte</label>
+        <label for="displayVariables">Vyberte vlastnosti, které uvidíte</label>
         <ul>
             {#each labels as x, i}
                 <li><input type="checkbox" id={"variable" + i} checked={labelsDisplayParity[i]} on:change={toggleVariableDisplay}><label for={"variable" + i}>{x.slice(1,)}</label></li>

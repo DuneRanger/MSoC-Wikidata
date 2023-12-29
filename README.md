@@ -136,4 +136,9 @@ For example, a query without images cannot be displayed as an image grid.
 
 After reading through ~500 results from Wikipedia:List of articles all languages should have (Q5460604),
 I have come to the conclusion that despite 3 initial items being a very low amount, these 3 items are surprisingly the best fit
-in terms of requirements for how the program currently works
+in terms of requirements for how the program currently worksd
+
+
+
+# Bug List
+After selecting "Budova", then next line "Budova", then next line "Budova", then change the first line to "Člověk", only the second line is reset, not the third line. After choosing a topic for the first line, it will still allow you to try the query, but it will instantly crash

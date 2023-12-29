@@ -211,7 +211,7 @@
                             + `        ?value rdfs:label ?valueLabel .\n`
                             + `    }\n`
                             + `    filter(lang(?valueLabel) = "cs")\n`
-                            + `} limit ${[100, 500, 2000][x]}`);
+                            + `} limit ${[50, 250, 1500][x]}`);
                         } else if (queryJson.queryID == GlobalVariables.queryEntityInfo[tripleDetails.selectedProperty].id && currentOption == searchInputValuesOption) {
                             examples = queryJson.data.results.bindings.map(x => x.valueLabel.value);
                         }

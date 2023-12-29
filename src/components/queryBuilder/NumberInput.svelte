@@ -39,5 +39,5 @@
         <option value="Rovno">Rovno</option>
     </select>
     <input type="number" style="width:120px" value={defaultValue} on:change={handleInputChange} placeholder="000">
-    <InfoSign text="Zadejte číslo ve standardních jednotkách (e.g. cm, kg, km)"></InfoSign>
+    <InfoSign text="Zadejte číslo v očekávaných jednotkách (e.g. cm, kg, km)"></InfoSign>
 </div>

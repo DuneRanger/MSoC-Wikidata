@@ -21,12 +21,11 @@
         if (GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "image") {
             viewImageOption = true;
             defaultViewOption = "#defaultView:ImageGrid";
-            continue;
         }
-        if (GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "coordinates") {
+        else if (GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "coordinates") {
             viewMapOption = true;
             defaultViewOption = "#defaultView:Map";
-            continue;
+            break;
         }
     }
 
@@ -135,6 +134,52 @@
             console.log("Main query for Iframe Display:\n" + mainQuery);
     }
 
+    function getEstimatedResults() {
+        //Builds the query for the result count
+        //Although the result count isn't needed for the finalDisplay, it is queried here and just exported to OptionsScreen
+//         resultCountQuery = `SELECT (COUNT(*) AS ?resultsNum)
+// WHERE {
+//     ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
+//     ${nameLine?.wantedValue ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
+//     ${queryLines.map(formatTripleAndFilter).join("")}
+// }`;
+        resultCountQuery = `SELECT (COUNT(*) AS ?resultsNum)
+WHERE {
+    ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
+    ${displayWikiArticle ? "?Stránka schema:about ?0. ?Stránka schema:isPartOf <https://en.wikipedia.org/>." : ""}
+    ${nameLine?.wantedValue && !thoroughFilterOption ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
+    ${queryLines.map(formatTripleAndFilter).join("")}
+
+    SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "${labelLanguages}" .
+        ${[...uniqueVariables].map((x, i) => `${x} rdfs:label ${labels[i]} .`).join("\n\t\t")}
+    }
+    ${labelLanguages == "cs" ? `FILTER(LANG(${labels[0]}) = "cs")` : ""}
+    ${validTriples.map((x, i) => GlobalVariables.queryEntityInfo[x.selectedProperty].valueType == "string"
+                    ? (labelLanguages == "cs" ? `FILTER(LANG(${labels[i+1]}) = "cs")\n\t` : "") + (thoroughFilterOption && x.selectedValue ? `FILTER(CONTAINS(${labels[i+1]}, "${x.selectedValue}"))\n\t` : "")
+                    : `BIND(${[...uniqueVariables][i+1]} AS ${labels[i+1]})\n\t`).join("")}
+    
+}
+
+`
+
+        queryResultsCount = "...";
+        console.log("Query for estimated result count\n" + resultCountQuery);
+
+        queryDispatcher.query(resultCountQuery, "redundant").then(queryJson => {
+            if (queryJson.data == "Timeout") {
+                queryResultsCount = "Přílíš mnoho možností na hledání";
+            // } else if (typeof queryJson.data == "string") {
+            //     throw queryJson.data
+            } else {
+                queryResultsCount = queryJson.data.results.bindings[0]["resultsNum"].value;
+            }
+        }).catch(err => {
+            console.log("Error for estimated result count\n" + err);
+            queryResultsCount = "Nastala chyba při načtení";
+        });
+    }
+
     function updateQueryTriples() {
         if (!queryValidity) {
             toggleResults();
@@ -174,37 +219,14 @@
             //Prepares unique labels for each variable, regardless of if they will be displayed or not
             labels.push("?" + validTriples[0].selectedItem);
             for (let x of validTriples) {
-                labels.push(("?" + x.selectedProperty + `··˃${x.selectedItem}`).replaceAll(" ", "_"));
+                labels.push(("?" + x.selectedItem + `··˃${x.selectedProperty}`).replaceAll(" ", "_").replaceAll(/[)()]/g, ""));
             }
             //Assures that all labels will be displayed by default
             labelsDisplayParity = labels.map(x => true);
 
             updateMainQuery();
 
-            //Builds the query for the result count
-            //Although the result count isn't needed for the finalDisplay, it is queried here and just exported to OptionsScreen
-            resultCountQuery = `SELECT (COUNT(*) AS ?resultsNum)
-WHERE {
-    ${[...uniqueVariables][0]} wdt:P31 ${GlobalVariables.queryEntityInfo[validTriples[0].selectedItem].id} .
-    ${nameLine?.wantedValue ? `${nameLine.item} ${nameLine.property} "${nameLine.wantedValue}"@cs .`: ""}
-    ${queryLines.map(formatTripleAndFilter).join("")}
-}`;
-
-            queryResultsCount = "...";
-            console.log("Query for estimated result count\n" + resultCountQuery);
-
-            queryDispatcher.query(resultCountQuery, "redundant").then(queryJson => {
-                if (queryJson.data == "Timeout") {
-                    queryResultsCount = "Přílíš mnoho možností na hledání";
-                // } else if (typeof queryJson.data == "string") {
-                //     throw queryJson.data
-                } else {
-                    queryResultsCount = queryJson.data.results.bindings[0]["resultsNum"].value;
-                }
-            }).catch(err => {
-                console.log("Error for estimated result count\n" + err);
-                queryResultsCount = "Nastala chyba při načtení";
-            });
+            getEstimatedResults();
         }
     }
     updateQueryTriples();
@@ -225,16 +247,19 @@ WHERE {
             labelLanguages = "cs,en,de,es,fr,it";
         } else labelLanguages = "cs";
         updateMainQuery();
+        getEstimatedResults();
     }
 
     function toggleFilterOption(event) {
         thoroughFilterOption = event.detail.parity;
         updateMainQuery();
+        getEstimatedResults();
     }
 
     function toggleWikiArticleOption(event) {
         displayWikiArticle = event.detail.parity;
         updateMainQuery();
+        getEstimatedResults();
     }
 
     function toggleImageView(event) {
@@ -254,6 +279,7 @@ WHERE {
     function updateResultsLimit(event) {
         resultsLimit = event.detail.resultsLimit;
         updateMainQuery();
+        // getEstimatedResults();
     }
 
     function toggleResults() {

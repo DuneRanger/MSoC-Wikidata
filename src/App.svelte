@@ -222,7 +222,7 @@
                 lastResultQuery = resultCountQuery;
                 
                 queryResults = "...";
-                console.log("Query for estimated result count: " + lastResultQueryID + "\n" + resultCountQuery);
+                console.log("Query for estimated result count: (id)" + lastResultQueryID + "\n" + resultCountQuery);
 
                 queryDispatcher.query(resultCountQuery, now).then(queryJson => {
                     // console.log ("\n\n\n=================\n\n\n", queryJson.queryID, "\n", lastResultQuery.toString(), "\n\n", queryJson.data.results.bindings[0]["resultsNum"].value)
@@ -246,7 +246,7 @@
 
 <style>
     main {
-        background-color: rgb(176, 176, 176);
+        background-color: rgb(233, 233, 233);
         min-height: 100vh;
     }
     
@@ -279,6 +279,13 @@
         margin: 0;
         height: auto;
         font-size: 14px;
+        border-color: black;
+        border-width: 1px;
+    }
+    #wikidataStamp {
+        position: absolute;
+        top: 94vh;
+        left: 1vw;
     }
 </style>
 
@@ -288,8 +295,8 @@
     {:else}
         <div id="queryBuilderOptions">
             <select id="searchValuesQuerySelector" on:change={updateSearchInputValuesOption}>
-                <option selected value="0">Rychlé, ale náhodné příklady</option>
-                <option value="1">Pomalé, ale přesné príklady</option>
+                <option selected value="0">Náhodné příklady (rychlé)</option>
+                <option value="1">Související príklady (pomalé)</option>
             </select>
             <InfoSign text="Mění způsob hledání příkladů u textových polí"></InfoSign>
         </div>
@@ -299,10 +306,10 @@
                 <RDFSTripleSet allTriples={triples} tripleDetails={triple} {searchInputValuesOption} on:tripleDetailsChange={handleTripleDetailsChange}></RDFSTripleSet>
             {/if}
         {/each}
-        <p style="margin-left: 8px">Přibližný počet výsledků: {queryResults}</p>
+        <p style="margin-left: 8px">Počet výsledků ve všech jazycích: {queryResults}</p>
         {#if triples[maxTriples-1].visibility}
             <p style="color:darkred; font-size:24px; margin: 8px 10px 0 10px">Dosáhli jste limitu řádků!</p>
-            <p style="padding-left: 8px; margin: 0">(Pravděpodobně by se nenašly žádné výsledky)</p>
+            <p style="padding-left: 8px; margin: 0">(Pravděpodobně nenajdete žádné výsledky)</p>
         {/if}
         {#if !triples[0].selectedProperty}
             <button id="displayButton" on:click={toggleResults} disabled><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
@@ -310,5 +317,6 @@
             <button id="displayButton" on:click={toggleResults}><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
         {/if}
     {/if}
+    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Wikidata_Stamp_Rec_Light.svg" width = "150px" id = "wikidataStamp" alt="Powered by Wikidata">
 </main>
   
