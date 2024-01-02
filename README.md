@@ -12,13 +12,13 @@ TODO
 
 ## A Detailed Explanation
 
-### Creating an RDFS Triple
+### Creating an RDF Triple
 
 There are currently 3 initial Items/Entities.
 For each of them, there is a list of properties that can be chosen.
 These properties can be numbers, dates, coordinates, strings, image urls, webpage urls.
 
-When a user selects an Item and a Property, latter RDFS Triples only allow them to work with the Item and properties that they selected.
+When a user selects an Item and a Property, latter RDF Triples only allow them to work with the Item and properties that they selected.
 (i.e. they cannot choose to look for a person and a unrelated building)
 The user may however look for a person, his residency, and choose a property for the residency (i.e. country, coordinates).
 Properties for each Item/property are saved in a local database which was generated through broad, generalised queries, which were manually filtered through, to ensure the quality and correctness of each property.
@@ -61,12 +61,12 @@ The user is informed of this with the help of a small *i* icon in the input box.
 There are only 2 notable features on the main page of the website.
 At the very top is a bar which acts as extra space for any possible options that the user may want or need to change.
 Currently there is only 1 option there, which allows the user to change the way possible examples are queried for search values.
-The default option looks for 100, 500, then 2500 results that fit that single RDFS Triple line.
+The default option looks for 100, 500, then 2500 results that fit that single RDF Triple line.
 It first searches for results that fulfill the property and then it filters them depending on if they have a czech label or not.
 This method is rather fast, but can result in some unusual or uncommon results.
 However thanks to it's speed and nature, it is usually capable of querying for most major values.
 (this tested with the residency property and judged according to the amount of results that were countries visible on a globe)
-The other method creates a query that includes all RDFS triple before it and has a valid czech label.
+The other method creates a query that includes all RDF triple before it and has a valid czech label.
 This query severely limits the amount of valid results and thus results in a much longer query time.
 Despite this, the query itself is not nested and the filter for a valid label is within the same block.
 This was done because of the vastly different results that were return with a nested query.

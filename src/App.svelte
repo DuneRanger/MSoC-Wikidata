@@ -316,7 +316,7 @@
         {:else}
             <button id="displayButton" on:click={toggleResults}><img src="./display.png" width="20px" height="15px" alt="">Zobrazit</button>
         {/if}
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Wikidata_Stamp_Rec_Light.svg" width = "150px" id = "wikidataStamp" alt="Powered by Wikidata">
     {/if}
-    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Wikidata_Stamp_Rec_Light.svg" width = "150px" id = "wikidataStamp" alt="Powered by Wikidata">
 </main>
   
